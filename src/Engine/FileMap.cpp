@@ -40,13 +40,32 @@ static std::string _canonicalize(const std::string &in)
 	return ret;
 }
 
+static std::string _internalPath(const std::string &modId, const std::string &prefixPath, const std::string &appendPath)
+{
+	std::string ret = modId + "/";
+	if (prefixPath.length())
+	{
+		ret += prefixPath + "/";
+	}
+	ret += appendPath;
+	return ret;
+}
+
 const std::string &getFilePath(const std::string &relativeFilePath)
 {
 	std::string canonicalRelativeFilePath = _canonicalize(relativeFilePath);
 	if (_resources.find(canonicalRelativeFilePath) == _resources.end())
 	{
-		Log(LOG_INFO) << "requested file not found: " << relativeFilePath;
-		return relativeFilePath;
+		canonicalRelativeFilePath = _internalPath("xcom1", "", _canonicalize(relativeFilePath));
+		if (_resources.find(canonicalRelativeFilePath) == _resources.end())
+		{
+			canonicalRelativeFilePath = _internalPath("xcom2", "", _canonicalize(relativeFilePath));
+			if (_resources.find(canonicalRelativeFilePath) == _resources.end())
+			{
+				Log(LOG_INFO) << "requested file not found: " << relativeFilePath;
+				return relativeFilePath;
+			}
+		}
 	}
 
 	return _resources.at(canonicalRelativeFilePath);
@@ -149,7 +168,16 @@ static void _mapFiles(const std::string &modId, const std::string &basePath,
 		}
 
 		// populate resource map
-		std::string canonicalRelativeFilePath = _canonicalize(_combinePath(relPath, *i));
+		std::string canonicalRelativeFilePath;
+		if (modId == "xcom1" || modId == "xcom2")
+		{
+			canonicalRelativeFilePath = _canonicalize(_internalPath(modId, relPath, *i));
+		}
+		else
+		{
+			canonicalRelativeFilePath = _canonicalize(_combinePath(relPath, *i));
+		}
+
 		if (_resources.insert(std::pair<std::string, std::string>(canonicalRelativeFilePath, fullpath)).second)
 		{
 			Log(LOG_VERBOSE) << "  mapped resource: " << canonicalRelativeFilePath << " -> " << fullpath;
