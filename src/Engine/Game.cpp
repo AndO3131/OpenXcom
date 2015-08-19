@@ -536,7 +536,7 @@ void Game::loadRulesets()
 	{
 		try
 		{
-			_rules->loadModRulesets(rulesets[i].second, i);
+			_rules->loadModRulesets(rulesets[i].first, rulesets[i].second, i);
 		}
 		catch (YAML::Exception &e)
 		{

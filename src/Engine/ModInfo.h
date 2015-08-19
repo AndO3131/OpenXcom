@@ -34,7 +34,7 @@ class ModInfo
 private:
 	const std::string _path;
 	std::string _name, _desc, _version, _author, _url, _id, _master;
-	bool _isMaster;
+	bool _isMaster, _isHybrid;
 	std::vector<std::string> _externalResourceDirs;
 public:
 	/// Creates default metadata for a mod at the specified path.
@@ -60,6 +60,7 @@ public:
 	const std::string &getMaster() const;
 	/// Gets whether this mod is a master (i.e. a vanilla game/total conversion)
 	bool isMaster() const;
+	bool isHybrid() const;
 	/// Gets the list of external resource dirs to load for this mod.
 	const std::vector<std::string> &getExternalResourceDirs() const;
 };

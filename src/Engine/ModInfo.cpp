@@ -27,7 +27,7 @@ namespace OpenXcom
 ModInfo::ModInfo(const std::string &path) :
 	 _path(path), _name(CrossPlatform::baseFilename(path)),
 	_desc("No description."), _version("1.0"), _author("unknown author"),
-	_id(_name), _master("xcom1"), _isMaster(false)
+	_id(_name), _master("xcom1"), _isMaster(false), _isHybrid(false)
 {
 	// empty
 }
@@ -47,6 +47,7 @@ void ModInfo::load(const std::string &filename)
 	_author   = doc["author"].as<std::string>(_author);
 	_id       = doc["id"].as<std::string>(_id);
 	_isMaster = doc["isMaster"].as<bool>(_isMaster);
+	_isHybrid = doc["isHybrid"].as<bool>(_isHybrid);
 
 	if (_isMaster)
 	{
@@ -72,6 +73,7 @@ const std::string &ModInfo::getAuthor()      const { return _author;   }
 const std::string &ModInfo::getId()          const { return _id;       }
 const std::string &ModInfo::getMaster()      const { return _master;   }
 bool               ModInfo::isMaster()       const { return _isMaster; }
+bool               ModInfo::isHybrid()       const { return _isHybrid; }
 
 const std::vector<std::string> &ModInfo::getExternalResourceDirs() const { return _externalResourceDirs; }
 }

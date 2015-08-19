@@ -122,6 +122,7 @@ protected:
 	std::vector<std::vector<int> > _alienItemLevels;
 	std::vector<SDL_Color> _transparencies;
 	int _facilityListOrder, _craftListOrder, _itemListOrder, _researchListOrder,  _manufactureListOrder, _ufopaediaListOrder, _invListOrder;
+	bool _isHybrid;
 	std::vector<std::string> _psiRequirements; // it's a cache for psiStrengthEval
 	/// Loads a ruleset from a YAML file.
 	void loadFile(const std::string &filename, size_t spriteOffset);
@@ -137,7 +138,7 @@ public:
 	~Ruleset();
 	/// Loads a list of rulesets from YAML files for the mod at the specified index.  The first
 	// mod loaded should be the master at index 0, then 1, and so on.
-	void loadModRulesets(const std::vector<std::string> &rulesetFiles, size_t modIdx);
+	void loadModRulesets(const std::string &modId, const std::vector<std::string> &rulesetFiles, size_t modIdx);
 	/// Generates the starting saved game.
 	SavedGame *newSave() const;
 	/// Gets the pool list for soldier names.
@@ -277,6 +278,7 @@ public:
 	const std::vector<std::string> *getMissionScriptList() const;
 	RuleMissionScript *getMissionScript(const std::string &name) const;
 	const std::string getFinalResearch() const;
+	bool getIsHybrid() const;
 };
 
 }

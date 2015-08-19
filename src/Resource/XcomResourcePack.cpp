@@ -175,6 +175,10 @@ XcomResourcePack::XcomResourcePack(Ruleset *rules) : ResourcePack()
 		_palettes[s2] = new Palette();
 		_palettes[s2]->loadDat(FileMap::getFilePath(s1), 128);
 	}
+	if (_ruleset->getIsHybrid())
+	{
+		
+	}
 
 	// Correct Battlescape palette
 	{
@@ -807,6 +811,7 @@ void XcomResourcePack::loadBattlescapeResources()
 							{2, 0, 24, 255}};
 
 	std::set<std::string> ufographContents = FileMap::getVFolderContents("UFOGRAPH");
+
 	for (size_t i = 0; i < sizeof(lbms)/sizeof(lbms[0]); ++i)
 	{
 		if (ufographContents.find(lbms[i]) == ufographContents.end())
