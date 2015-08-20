@@ -163,21 +163,44 @@ XcomResourcePack::XcomResourcePack(Ruleset *rules) : ResourcePack()
 	_ruleset = rules;
 	// Load palettes
 	const char *pal[] = {"PAL_GEOSCAPE", "PAL_BASESCAPE", "PAL_GRAPHS", "PAL_UFOPAEDIA", "PAL_BATTLEPEDIA"};
+	const char *pal2[] = {"2ND_PAL_GEOSCAPE", "2ND_PAL_BASESCAPE", "2ND_PAL_GRAPHS", "2ND_PAL_UFOPAEDIA", "2ND_PAL_BATTLEPEDIA"};
 	for (size_t i = 0; i < sizeof(pal) / sizeof(pal[0]); ++i)
 	{
 		std::string s = "GEODATA/PALETTES.DAT";
 		_palettes[pal[i]] = new Palette();
 		_palettes[pal[i]]->loadDat(FileMap::getFilePath(s), 256, Palette::palOffset(i));
+		if (_ruleset->getIsHybrid())
+		{
+			std::string s1;
+			_palettes[pal2[i]] = new Palette();
+			if (FileMap::getFilePath("xcom1/GEODATA/PALETTES.DAT") != "xcom1/GEODATA/PALETTES.DAT")
+			{
+				s1 = "xcom1/GEODATA/PALETTES.DAT";
+			}
+			else
+			{
+				s1 = "xcom2/GEODATA/PALETTES.DAT";
+			}
+			_palettes[pal2[i]]->loadDat(FileMap::getFilePath(s1), 256, Palette::palOffset(i));
+		}
 	}
+
 	{
 		std::string s1 = "GEODATA/BACKPALS.DAT";
 		std::string s2 = "BACKPALS.DAT";
 		_palettes[s2] = new Palette();
 		_palettes[s2]->loadDat(FileMap::getFilePath(s1), 128);
-	}
-	if (_ruleset->getIsHybrid())
-	{
-		
+		if (_ruleset->getIsHybrid())
+		{
+			std::string s3 = "xcom1/GEODATA/BACKPALS.DAT";
+			std::string s4 = "2ND_BACKPALS.DAT";
+			_palettes[s4] = new Palette();
+			if (FileMap::getFilePath(s3) == s3)
+			{
+				s3 = "xcom2/GEODATA/BACKPALS.DAT";
+			}
+			_palettes[s4]->loadDat(FileMap::getFilePath(s3), 128);
+		}
 	}
 
 	// Correct Battlescape palette
@@ -208,6 +231,23 @@ XcomResourcePack::XcomResourcePack(Ruleset *rules) : ResourcePack()
 		{
 			SDL_Color *color = _palettes[s2]->getColors(Palette::backPos + 16 + i);
 			*color = gradient[i];
+		}
+
+		if (_ruleset->getIsHybrid())
+		{
+			std::string s3 = "xcom1/GEODATA/PALETTES.DAT";
+			std::string s4 = "2ND_PAL_BATTLESCAPE";
+			if (FileMap::getFilePath(s3) == s3)
+			{
+				s3 = "xcom2/GEODATA/PALETTES.DAT";
+			}
+			_palettes[s4] = new Palette();
+			_palettes[s4]->loadDat(FileMap::getFilePath(s3), 256, Palette::palOffset(4));
+			for (size_t i = 0; i < sizeof(gradient)/sizeof(gradient[0]); ++i)
+			{
+				SDL_Color *color = _palettes[s4]->getColors(Palette::backPos + 16 + i);
+				*color = gradient[i];
+			}
 		}
 	}
 
