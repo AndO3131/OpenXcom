@@ -29,12 +29,12 @@
 #include "../Battlescape/BattlescapeGame.h"
 #include "../Battlescape/BattleAIState.h"
 #include "Soldier.h"
-#include "../Ruleset/Armor.h"
-#include "../Ruleset/Unit.h"
+#include "../Mod/Armor.h"
+#include "../Mod/Unit.h"
 #include "../Engine/RNG.h"
-#include "../Ruleset/RuleInventory.h"
-#include "../Ruleset/RuleSoldier.h"
-#include "../Ruleset/Ruleset.h"
+#include "../Mod/RuleInventory.h"
+#include "../Mod/RuleSoldier.h"
+#include "../Mod/Mod.h"
 #include "Tile.h"
 #include "SavedGame.h"
 #include "SavedBattleGame.h"
@@ -75,6 +75,17 @@ BattleUnit::BattleUnit(Soldier *soldier, int depth) :
 	if (_movementType == MT_FLOAT)
 	{
 		if (depth > 0)
+		{
+			_movementType = MT_FLY;
+		}
+		else
+		{
+			_movementType = MT_WALK;
+		}
+	}
+	else if (_movementType == MT_SINK)
+	{
+		if (depth == 0)
 		{
 			_movementType = MT_FLY;
 		}
@@ -181,6 +192,17 @@ BattleUnit::BattleUnit(Unit *unit, UnitFaction faction, int id, Armor *armor, in
 	if (_movementType == MT_FLOAT)
 	{
 		if (depth > 0)
+		{
+			_movementType = MT_FLY;
+		}
+		else
+		{
+			_movementType = MT_WALK;
+		}
+	}
+	else if (_movementType == MT_SINK)
+	{
+		if (depth == 0)
 		{
 			_movementType = MT_FLY;
 		}
@@ -1172,14 +1194,10 @@ int BattleUnit::getStunlevel() const
  */
 void BattleUnit::knockOut(BattlescapeGame *battle)
 {
-	if (getArmor()->getSize() > 1) // large units die
-	{
-		_health = 0;
-	}
-	else if (!_spawnUnit.empty())
+	if (!_spawnUnit.empty())
 	{
 		setRespawn(false);
-		BattleUnit *newUnit = battle->convertUnit(this, _spawnUnit);
+		BattleUnit *newUnit = battle->convertUnit(this);
 		newUnit->knockOut(battle);
 	}
 	else
@@ -1235,7 +1253,7 @@ int BattleUnit::getFallingPhase() const
  */
 bool BattleUnit::isOut() const
 {
-	return _status == STATUS_DEAD || _status == STATUS_UNCONSCIOUS || _status == STATUS_TIME_OUT;
+	return _status == STATUS_DEAD || _status == STATUS_UNCONSCIOUS || _status == STATUS_IGNORE_ME;
 }
 
 /**
@@ -1566,45 +1584,23 @@ double BattleUnit::getReactionScore()
  */
 void BattleUnit::prepareNewTurn(bool fullProcess)
 {
-	if (_status == STATUS_TIME_OUT)
+	if (_status == STATUS_IGNORE_ME)
 	{
 		return;
 	}
 
 	// revert to original faction
-	_faction = _originalFaction;
+	// don't give it back its TUs or anything this round
+	// because it's no longer a unit of the team getting TUs back
+	if (_faction != _originalFaction)
+	{
+		_faction = _originalFaction;
+		return;
+	}
 
 	_unitsSpottedThisTurn.clear();
 
-	// recover TUs
-	int TURecovery = getBaseStats()->tu;
-	float encumbrance = (float)getBaseStats()->strength / (float)getCarriedWeight();
-	if (encumbrance < 1)
-	{
-	  TURecovery = int(encumbrance * TURecovery);
-	}
-	// Each fatal wound to the left or right leg reduces the soldier's TUs by 10%.
-	TURecovery -= (TURecovery * (_fatalWounds[BODYPART_LEFTLEG]+_fatalWounds[BODYPART_RIGHTLEG] * 10))/100;
-	setTimeUnits(TURecovery);
-
-	// recover energy
-	if (!isOut())
-	{
-		int ENRecovery;
-		if (_geoscapeSoldier != 0)
-		{
-			ENRecovery = _geoscapeSoldier->getInitStats()->tu / 3;
-		}
-		else
-		{
-			ENRecovery = _unitRules->getEnergyRecovery();
-		}
-		// Each fatal wound to the body reduces the soldier's energy recovery by 10%.
-		ENRecovery -= (_energy * (_fatalWounds[BODYPART_TORSO] * 10))/100;
-		_energy += ENRecovery;
-		if (_energy > getBaseStats()->stamina)
-			_energy = getBaseStats()->stamina;
-	}
+	recoverTimeUnits();
 
 	_dontReselect = false;
 	_motionPoints = 0;
@@ -2962,12 +2958,12 @@ MovementType BattleUnit::getMovementType() const
 }
 
 /**
- * Sets this unit to "time-out" status,
+ * Elevates the unit to grand galactic inquisitor status,
  * meaning they will NOT take part in the current battle.
  */
 void BattleUnit::goToTimeOut()
 {
-	_status = STATUS_TIME_OUT;
+	_status = STATUS_IGNORE_ME;
 }
 
 /**
@@ -2985,27 +2981,27 @@ static inline BattleItem *createItem(SavedBattleGame *save, BattleUnit *unit, Ru
  * Set special weapon that is handled outside inventory.
  * @param save
  */
-void BattleUnit::setSpecialWeapon(SavedBattleGame *save, const Ruleset *rule)
+void BattleUnit::setSpecialWeapon(SavedBattleGame *save, const Mod *mod)
 {
 	RuleItem *item = 0;
 	int i = 0;
 
 	if (getUnitRules())
 	{
-		item = rule->getItem(getUnitRules()->getMeleeWeapon());
+		item = mod->getItem(getUnitRules()->getMeleeWeapon());
 		if (item)
 		{
 			_specWeapon[i++] = createItem(save, this, item);
 		}
 	}
-	item = rule->getItem(getArmor()->getSpecialWeapon());
+	item = mod->getItem(getArmor()->getSpecialWeapon());
 	if (item)
 	{
 		_specWeapon[i++] = createItem(save, this, item);
 	}
-	if (getBaseStats()->psiSkill > 0 && getFaction() == FACTION_HOSTILE)
+	if (getBaseStats()->psiSkill > 0 && getOriginalFaction() == FACTION_HOSTILE)
 	{
-		item = rule->getItem("ALIEN_PSI_WEAPON");
+		item = mod->getItem("ALIEN_PSI_WEAPON");
 		if (item)
 		{
 			_specWeapon[i++] = createItem(save, this, item);
@@ -3028,4 +3024,39 @@ BattleItem *BattleUnit::getSpecialWeapon(BattleType type) const
 	return 0;
 }
 
+/**
+ * Recovers a unit's TUs and energy, taking a number of factors into consideration.
+ */
+void BattleUnit::recoverTimeUnits()
+{
+	// recover TUs
+	int TURecovery = getBaseStats()->tu;
+	float encumbrance = (float)getBaseStats()->strength / (float)getCarriedWeight();
+	if (encumbrance < 1)
+	{
+		TURecovery = int(encumbrance * TURecovery);
+	}
+	// Each fatal wound to the left or right leg reduces the soldier's TUs by 10%.
+	TURecovery -= (TURecovery * (_fatalWounds[BODYPART_LEFTLEG]+_fatalWounds[BODYPART_RIGHTLEG] * 10))/100;
+	setTimeUnits(TURecovery);
+
+	// recover energy
+	if (!isOut())
+	{
+		int ENRecovery;
+		if (_geoscapeSoldier != 0)
+		{
+			ENRecovery = _geoscapeSoldier->getInitStats()->tu / 3;
+		}
+		else
+		{
+			ENRecovery = _unitRules->getEnergyRecovery();
+		}
+		// Each fatal wound to the body reduces the soldier's energy recovery by 10%.
+		ENRecovery -= (_energy * (_fatalWounds[BODYPART_TORSO] * 10))/100;
+		_energy += ENRecovery;
+		if (_energy > getBaseStats()->stamina)
+			_energy = getBaseStats()->stamina;
+	}
+}
 }

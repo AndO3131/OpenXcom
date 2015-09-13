@@ -18,9 +18,9 @@
  */
 #include "DogfightState.h"
 #include <sstream>
-#include "../Geoscape/GeoscapeState.h"
+#include "GeoscapeState.h"
 #include "../Engine/Game.h"
-#include "../Resource/ResourcePack.h"
+#include "../Mod/Mod.h"
 #include "../Engine/Screen.h"
 #include "../Engine/LocalizedText.h"
 #include "../Engine/SurfaceSet.h"
@@ -31,25 +31,23 @@
 #include "Globe.h"
 #include "../Savegame/SavedGame.h"
 #include "../Savegame/Craft.h"
-#include "../Ruleset/RuleCraft.h"
+#include "../Mod/RuleCraft.h"
 #include "../Savegame/CraftWeapon.h"
-#include "../Ruleset/RuleCraftWeapon.h"
+#include "../Mod/RuleCraftWeapon.h"
 #include "../Savegame/Ufo.h"
-#include "../Ruleset/RuleUfo.h"
-#include "../Engine/Music.h"
+#include "../Mod/RuleUfo.h"
 #include "../Engine/RNG.h"
 #include "../Engine/Sound.h"
 #include "../Savegame/Base.h"
 #include "../Savegame/CraftWeaponProjectile.h"
 #include "../Savegame/Country.h"
-#include "../Ruleset/RuleCountry.h"
+#include "../Mod/RuleCountry.h"
 #include "../Savegame/Region.h"
-#include "../Ruleset/RuleRegion.h"
+#include "../Mod/RuleRegion.h"
 #include "../Savegame/AlienMission.h"
-#include "../Savegame/AlienStrategy.h"
-#include "../Engine/Options.h"
-#include <cstdlib>
 #include "DogfightErrorState.h"
+#include "../Mod/Mod.h"
+#include "../Mod/RuleInterface.h"
 
 namespace OpenXcom
 {
@@ -300,10 +298,10 @@ DogfightState::DogfightState(GeoscapeState *state, Craft *craft, Ufo *ufo) : _st
 	_btnUfo->invalidate(false);
 
 	// Set up objects
-	RuleInterface *dogfightInterface = _game->getRuleset()->getInterface("dogfight");
+	RuleInterface *dogfightInterface = _game->getMod()->getInterface("dogfight");
 
 	Surface *graphic;
-	graphic = _game->getResourcePack()->getSurface("INTERWIN.DAT");
+	graphic = _game->getMod()->getSurface("INTERWIN.DAT");
 	graphic->setX(0);
 	graphic->setY(0);
 	graphic->getCrop()->x = 0;
@@ -328,7 +326,7 @@ DogfightState::DogfightState(GeoscapeState *state, Craft *craft, Ufo *ufo) : _st
 	}
 	else
 	{
-		graphic = _game->getResourcePack()->getSurface(ufo->getRules()->getModSprite());
+		graphic = _game->getMod()->getSurface(ufo->getRules()->getModSprite());
 	}
 	graphic->setX(dogfightInterface->getElement("previewTop")->x);
 	graphic->setY(dogfightInterface->getElement("previewTop")->h);
@@ -365,7 +363,7 @@ DogfightState::DogfightState(GeoscapeState *state, Craft *craft, Ufo *ufo) : _st
 
 	_txtStatus->setText(tr("STR_STANDOFF"));
 
-	SurfaceSet *set = _game->getResourcePack()->getSurfaceSet("INTICON.PCK");
+	SurfaceSet *set = _game->getMod()->getSurfaceSet("INTICON.PCK");
 
 	// Create the minimized dogfight icon.
 	Surface *frame = set->getFrame(_craft->getRules()->getSprite());
@@ -489,7 +487,7 @@ DogfightState::DogfightState(GeoscapeState *state, Craft *craft, Ufo *ufo) : _st
 	if (!_ufo->getEscapeCountdown())
 	{
 		_ufo->setFireCountdown(0);
-		_ufo->setEscapeCountdown(_ufo->getRules()->getBreakOffTime() + RNG::generate(0, _ufo->getRules()->getBreakOffTime()) - 30 * (int)(_game->getSavedGame()->getDifficulty()));
+		_ufo->setEscapeCountdown(_ufo->getRules()->getBreakOffTime() + RNG::generate(0, _ufo->getRules()->getBreakOffTime()) - 30 * _game->getSavedGame()->getDifficultyCoefficient());
 	}
 
 	// technically this block is redundant, but i figure better to initialize the variables as SOMETHING
@@ -571,7 +569,7 @@ void DogfightState::think()
 		update();
 		_craftDamageAnimTimer->think(this, 0);
 	}
-	if (_craft->getDestination() != _ufo || _ufo->getStatus() == Ufo::LANDED)
+	if (!_craft->isInDogfight() || _craft->getDestination() != _ufo || _ufo->getStatus() == Ufo::LANDED)
 	{
 		endDogfight();
 	}
@@ -723,7 +721,7 @@ void DogfightState::update()
 	// Check if craft is not low on fuel when window minimized, and
 	// Check if crafts destination hasn't been changed when window minimized.
 	Ufo* u = dynamic_cast<Ufo*>(_craft->getDestination());
-	if (u != _ufo || _craft->getLowFuel() || (_minimized && _ufo->isCrashed()))
+	if (u != _ufo || !_craft->isInDogfight() || _craft->getLowFuel() || (_minimized && _ufo->isCrashed()))
 	{
 		endDogfight();
 		return;
@@ -760,9 +758,8 @@ void DogfightState::update()
 		finalRun = true;
 		setStatus("STR_UFO_OUTRUNNING_INTERCEPTOR");
 	}
-	else //ufo cannot break off, because it's too slow
+	else
 	{
-		_craft->setSpeed(_ufo->getSpeed());
 		_ufoBreakingOff = false;
 	}
 
@@ -827,8 +824,11 @@ void DogfightState::update()
 						if (_ufo->isCrashed())
 						{
 							_ufo->setShotDownByCraftId(_craft->getUniqueId());
-							_ufoBreakingOff = false;
 							_ufo->setSpeed(0);
+							// if the ufo got destroyed here, these no longer apply
+							_ufoBreakingOff = false;
+							finalRun = false;
+							_end = false;
 						}
 						if (_ufo->getHitFrame() == 0)
 						{
@@ -837,7 +837,7 @@ void DogfightState::update()
 						}
 
 						setStatus("STR_UFO_HIT");
-						_game->getResourcePack()->getSound("GEO.CAT", ResourcePack::UFO_HIT)->play();
+						_game->getMod()->getSound("GEO.CAT", Mod::UFO_HIT)->play();
 						p->remove();
 					}
 					// Missed.
@@ -880,7 +880,7 @@ void DogfightState::update()
 							_craft->setDamage(_craft->getDamage() + damage);
 							drawCraftDamage();
 							setStatus("STR_INTERCEPTOR_DAMAGED");
-							_game->getResourcePack()->getSound("GEO.CAT", ResourcePack::INTERCEPTOR_HIT)->play(); //10
+							_game->getMod()->getSound("GEO.CAT", Mod::INTERCEPTOR_HIT)->play(); //10
 							if (_mode == _btnCautious && _craft->getDamagePercentage() >= 50)
 							{
 								_targetDist = STANDOFF_DIST;
@@ -1011,7 +1011,7 @@ void DogfightState::update()
 		{
 			setStatus("STR_INTERCEPTOR_DESTROYED");
 			_timeout += 30;
-			_game->getResourcePack()->getSound("GEO.CAT", ResourcePack::INTERCEPTOR_EXPLODE)->play();
+			_game->getMod()->getSound("GEO.CAT", Mod::INTERCEPTOR_EXPLODE)->play();
 			finalRun = true;
 			_destroyCraft = true;
 			_ufo->setShootingAt(0);
@@ -1023,11 +1023,11 @@ void DogfightState::update()
 			AlienMission *mission = _ufo->getMission();
 			mission->ufoShotDown(*_ufo);
 			// Check for retaliation trigger.
-			if (!RNG::percent(4 * (24 - (int)(_game->getSavedGame()->getDifficulty()))))
+			if (!RNG::percent(4 * (24 - _game->getSavedGame()->getDifficultyCoefficient())))
 			{
 				// Spawn retaliation mission.
 				std::string targetRegion;
-				if (RNG::percent(50 - 6 * (int)(_game->getSavedGame()->getDifficulty())))
+				if (RNG::percent(50 - 6 * _game->getSavedGame()->getDifficultyCoefficient()))
 				{
 					// Attack on UFO's mission region
 					targetRegion = _ufo->getMission()->getRegion();
@@ -1041,12 +1041,12 @@ void DogfightState::update()
 				// Difference from original: No retaliation until final UFO lands (Original: Is spawned).
 				if (!_game->getSavedGame()->findAlienMission(targetRegion, OBJECTIVE_RETALIATION))
 				{
-					const RuleAlienMission &rule = *_game->getRuleset()->getRandomMission(OBJECTIVE_RETALIATION, _game->getSavedGame()->getMonthsPassed());
+					const RuleAlienMission &rule = *_game->getMod()->getRandomMission(OBJECTIVE_RETALIATION, _game->getSavedGame()->getMonthsPassed());
 					AlienMission *mission = new AlienMission(rule);
 					mission->setId(_game->getSavedGame()->getId("ALIEN_MISSIONS"));
-					mission->setRegion(targetRegion, *_game->getRuleset());
+					mission->setRegion(targetRegion, *_game->getMod());
 					mission->setRace(_ufo->getAlienRace());
-					mission->start();
+					mission->start(mission->getRules().getWave(0).spawnTimer); // fixed delay for first scout
 					_game->getSavedGame()->getAlienMissions().push_back(mission);
 				}
 			}
@@ -1072,7 +1072,7 @@ void DogfightState::update()
 						}
 					}
 					setStatus("STR_UFO_DESTROYED");
-					_game->getResourcePack()->getSound("GEO.CAT", ResourcePack::UFO_EXPLODE)->play(); //11
+					_game->getMod()->getSound("GEO.CAT", Mod::UFO_EXPLODE)->play(); //11
 				}
 				_destroyUfo = true;
 			}
@@ -1081,7 +1081,7 @@ void DogfightState::update()
 				if (_ufo->getShotDownByCraftId() == _craft->getUniqueId())
 				{
 					setStatus("STR_UFO_CRASH_LANDS");
-					_game->getResourcePack()->getSound("GEO.CAT", ResourcePack::UFO_CRASH)->play(); //10
+					_game->getMod()->getSound("GEO.CAT", Mod::UFO_CRASH)->play(); //10
 					for (std::vector<Country*>::iterator country = _game->getSavedGame()->getCountries()->begin(); country != _game->getSavedGame()->getCountries()->end(); ++country)
 					{
 						if ((*country)->getRules()->insideCountry(_ufo->getLongitude(), _ufo->getLatitude()))
@@ -1159,7 +1159,7 @@ void DogfightState::fireWeapon1()
 			p->setHorizontalPosition(HP_LEFT);
 			_projectiles.push_back(p);
 
-			_game->getResourcePack()->getSound("GEO.CAT", w1->getRules()->getSound())->play();
+			_game->getMod()->getSound("GEO.CAT", w1->getRules()->getSound())->play();
 		}
 	}
 }
@@ -1186,7 +1186,7 @@ void DogfightState::fireWeapon2()
 			p->setHorizontalPosition(HP_RIGHT);
 			_projectiles.push_back(p);
 
-			_game->getResourcePack()->getSound("GEO.CAT", w2->getRules()->getSound())->play();
+			_game->getMod()->getSound("GEO.CAT", w2->getRules()->getSound())->play();
 		}
 	}
 }
@@ -1198,7 +1198,7 @@ void DogfightState::fireWeapon2()
  */
 void DogfightState::ufoFireWeapon()
 {
-	int fireCountdown = std::max(1, (_ufo->getRules()->getWeaponReload() - 2 * (int)(_game->getSavedGame()->getDifficulty())));
+	int fireCountdown = std::max(1, (_ufo->getRules()->getWeaponReload() - 2 * _game->getSavedGame()->getDifficultyCoefficient()));
 	_ufo->setFireCountdown(RNG::generate(0, fireCountdown) + fireCountdown);
 
 	setStatus("STR_UFO_RETURN_FIRE");
@@ -1210,7 +1210,7 @@ void DogfightState::ufoFireWeapon()
 	p->setHorizontalPosition(HP_CENTER);
 	p->setPosition(_currentDist - (_ufo->getRules()->getRadius() / 2));
 	_projectiles.push_back(p);
-	_game->getResourcePack()->getSound("GEO.CAT", ResourcePack::UFO_FIRE)->play();
+	_game->getMod()->getSound("GEO.CAT", Mod::UFO_FIRE)->play();
 }
 
 /**
@@ -1638,7 +1638,7 @@ void DogfightState::btnMinimizedIconClick(Action *)
 		bool underwater = !_craft->getWeapons()->empty();
 		for (std::vector<CraftWeapon*>::iterator w = _craft->getWeapons()->begin(); w != _craft->getWeapons()->end(); ++w)
 		{
-			if (!(*w)->getRules()->isWaterOnly())
+			if ((*w) && !(*w)->getRules()->isWaterOnly())
 			{
 				underwater = false;
 				break;

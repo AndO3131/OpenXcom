@@ -23,7 +23,7 @@
 #include <cmath>
 #include "../Engine/Action.h"
 #include "../Engine/Game.h"
-#include "../Resource/ResourcePack.h"
+#include "../Mod/Mod.h"
 #include "../Engine/LocalizedText.h"
 #include "../Interface/TextButton.h"
 #include "../Interface/Window.h"
@@ -35,12 +35,14 @@
 #include "../Savegame/Soldier.h"
 #include "../Savegame/Craft.h"
 #include "../Savegame/ItemContainer.h"
-#include "../Ruleset/RuleItem.h"
+#include "../Mod/RuleItem.h"
 #include "../Engine/Timer.h"
 #include "../Menu/ErrorMessageState.h"
 #include "TransferConfirmState.h"
 #include "../Engine/Options.h"
 #include "../fmath.h"
+#include "../Mod/Mod.h"
+#include "../Mod/RuleInterface.h"
 
 namespace OpenXcom
 {
@@ -67,7 +69,7 @@ TransferItemsState::TransferItemsState(Base *baseFrom, Base *baseTo) : _baseFrom
 	// Set palette
 	setInterface("transferMenu");
 
-	_ammoColor = _game->getRuleset()->getInterface("transferMenu")->getElement("ammoColor")->color;
+	_ammoColor = _game->getMod()->getInterface("transferMenu")->getElement("ammoColor")->color;
 
 	add(_window, "window", "transferMenu");
 	add(_btnOk, "button", "transferMenu");
@@ -82,7 +84,7 @@ TransferItemsState::TransferItemsState(Base *baseFrom, Base *baseTo) : _baseFrom
 	centerAllSurfaces();
 
 	// Set up objects
-	_window->setBackground(_game->getResourcePack()->getSurface("BACK13.SCR"));
+	_window->setBackground(_game->getMod()->getSurface("BACK13.SCR"));
 
 	_btnOk->setText(tr("STR_TRANSFER"));
 	_btnOk->onMouseClick((ActionHandler)&TransferItemsState::btnOkClick);
@@ -163,7 +165,7 @@ TransferItemsState::TransferItemsState(Base *baseFrom, Base *baseTo) : _baseFrom
 		_lstItems->addRow(4, tr("STR_ENGINEER").c_str(), ss.str().c_str(), L"0", ss2.str().c_str());
 		++_itemOffset;
 	}
-	const std::vector<std::string> &items = _game->getRuleset()->getItemsList();
+	const std::vector<std::string> &items = _game->getMod()->getItemsList();
 	for (std::vector<std::string>::const_iterator i = items.begin(); i != items.end(); ++i)
 	{
 		int qty = _baseFrom->getItems()->getItem(*i);
@@ -172,7 +174,7 @@ TransferItemsState::TransferItemsState(Base *baseFrom, Base *baseTo) : _baseFrom
 			_baseQty.push_back(qty);
 			_transferQty.push_back(0);
 			_items.push_back(*i);
-			RuleItem *rule = _game->getRuleset()->getItem(*i);
+			RuleItem *rule = _game->getMod()->getItem(*i);
 			std::wostringstream ss, ss2;
 			ss << qty;
 			ss2 << _baseTo->getItems()->getItem(*i);
@@ -534,7 +536,7 @@ void TransferItemsState::increaseByValue(int change)
 	RuleItem * selItem = NULL;
 
 	if (TRANSFER_ITEM == selType)
-		selItem = _game->getRuleset()->getItem(_items[getItemIndex(_sel)]);
+		selItem = _game->getMod()->getItem(_items[getItemIndex(_sel)]);
 
 	if (0 >= change || getQuantity() <= _transferQty[_sel]) return;
 	std::wstring errorMessage = L"";
@@ -558,7 +560,7 @@ void TransferItemsState::increaseByValue(int change)
 			_timerInc->stop();
 			errorMessage = tr("STR_NO_FREE_ACCOMODATION_CREW");
 		}
-		else if (Options::storageLimitsEnforced && _baseTo->storesOverfull(_iQty + craft->getItems()->getTotalSize(_game->getRuleset())))
+		else if (Options::storageLimitsEnforced && _baseTo->storesOverfull(_iQty + craft->getItems()->getTotalSize(_game->getMod())))
 		{
 			_timerInc->stop();
 			errorMessage = tr("STR_NOT_ENOUGH_STORE_SPACE_FOR_CRAFT");
@@ -579,7 +581,7 @@ void TransferItemsState::increaseByValue(int change)
 
 	if (errorMessage != L"")
 	{
-		RuleInterface *menuInterface = _game->getRuleset()->getInterface("transferMenu");
+		RuleInterface *menuInterface = _game->getMod()->getInterface("transferMenu");
 		_game->pushState(new ErrorMessageState(errorMessage, _palette, menuInterface->getElement("errorMessage")->color, "BACK13.SCR", menuInterface->getElement("errorPalette")->color));
 		return;
 	}
@@ -600,7 +602,7 @@ void TransferItemsState::increaseByValue(int change)
 		Craft *craft = _crafts[_sel - _soldiers.size()];
 		_cQty++;
 		_pQty += craft->getNumSoldiers();
-		_iQty += craft->getItems()->getTotalSize(_game->getRuleset());
+		_iQty += craft->getItems()->getTotalSize(_game->getMod());
 		_baseQty[_sel]--;
 		_transferQty[_sel]++;
 		if (!Options::canTransferCraftsWhileAirborne || craft->getStatus() != "STR_OUT") _total += getCost();
@@ -608,7 +610,7 @@ void TransferItemsState::increaseByValue(int change)
 	// Item count
 	else if (TRANSFER_ITEM == selType && !selItem->isAlien() )
 	{
-		double storesNeededPerItem = _game->getRuleset()->getItem(_items[getItemIndex(_sel)])->getSize();
+		double storesNeededPerItem = _game->getMod()->getItem(_items[getItemIndex(_sel)])->getSize();
 		double freeStores = _baseTo->getAvailableStores() - _baseTo->getUsedStores() - _iQty;
 		double freeStoresForItem = (double)(INT_MAX);
 		if (!AreSame(storesNeededPerItem, 0.0))
@@ -665,12 +667,12 @@ void TransferItemsState::decreaseByValue(int change)
 		craft = _crafts[_sel - _soldiers.size()];
 		_cQty--;
 		_pQty -= craft->getNumSoldiers();
-		_iQty -= craft->getItems()->getTotalSize(_game->getRuleset());
+		_iQty -= craft->getItems()->getTotalSize(_game->getMod());
 	}
 	// Item count
 	else if (TRANSFER_ITEM == selType)
 	{
-		const RuleItem * selItem = _game->getRuleset()->getItem(_items[getItemIndex(_sel)]);
+		const RuleItem * selItem = _game->getMod()->getItem(_items[getItemIndex(_sel)]);
 		if (!selItem->isAlien())
 		{
 			_iQty -= selItem->getSize() * change;
@@ -706,7 +708,7 @@ void TransferItemsState::updateItemStrings()
 		_lstItems->setRowColor(_sel, _lstItems->getColor());
 		if (_sel > _itemOffset)
 		{
-			RuleItem *rule = _game->getRuleset()->getItem(_items[_sel - _itemOffset]);
+			RuleItem *rule = _game->getMod()->getItem(_items[_sel - _itemOffset]);
 			if (rule->getBattleType() == BT_AMMO || (rule->getBattleType() == BT_NONE && rule->getClipSize() > 0))
 			{
 				_lstItems->setRowColor(_sel, _ammoColor);

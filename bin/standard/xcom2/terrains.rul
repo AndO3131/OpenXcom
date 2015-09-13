@@ -538,7 +538,7 @@ terrains: #done
       - name: ALART09
         width: 20
         length: 20
-        type: 6
+        groups: 6
       - name: ALART10
         width: 20
         length: 20
@@ -553,6 +553,8 @@ terrains: #done
       - SEA
       - PORT01
       - PORT02
+    ambience: 67
+    ambientVolume: 0.25
     civilianTypes:
       - SAILOR_CIVILIAN
       - DOCKER_CIVILIAN
@@ -640,6 +642,8 @@ terrains: #done
       - ISLAND1
       - ISLAND2
       - ISLAND3
+    ambience: 67
+    ambientVolume: 0.25
     mapBlocks:
       - name: ISLAND00
         width: 10
@@ -695,6 +699,7 @@ terrains: #done
     music:
       - GMTACDRY
     ambience: 67
+    ambientVolume: 0.25
     mapDataSets:
       - BLANKS
       - SEA
@@ -718,6 +723,8 @@ terrains: #done
   - name: XBASES
     music:
       - GMTACDRY
+    ambience: 67
+    ambientVolume: 0.25
     mapDataSets:
       - BLANKS
       - XBASES01
@@ -843,6 +850,8 @@ terrains: #done
   - name: GRUNGE
     music:
       - GMTACDRY
+    ambience: 67
+    ambientVolume: 0.25
     mapDataSets:
       - BLANKS
       - GRUNGE1
@@ -913,6 +922,8 @@ terrains: #done
   - name: LINERT
     music:
       - GMTACDRY
+    ambience: 67
+    ambientVolume: 0.25
     mapDataSets:
       - BLANKS
       - DECKC
@@ -934,6 +945,8 @@ terrains: #done
   - name: LINERB
     music:
       - GMTACDRY
+    ambience: 67
+    ambientVolume: 0.25
     mapDataSets:
       - BLANKS
       - SEA

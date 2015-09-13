@@ -23,9 +23,9 @@
 #include <string>
 #include "../Battlescape/Position.h"
 #include "../Battlescape/BattlescapeGame.h"
-#include "../Ruleset/RuleItem.h"
-#include "../Ruleset/Unit.h"
-#include "../Ruleset/MapData.h"
+#include "../Mod/RuleItem.h"
+#include "../Mod/Unit.h"
+#include "../Mod/MapData.h"
 #include "Soldier.h"
 #include "BattleItem.h"
 
@@ -47,7 +47,7 @@ class Language;
 class AlienBAIState;
 class CivilianBAIState;
 
-enum UnitStatus {STATUS_STANDING, STATUS_WALKING, STATUS_FLYING, STATUS_TURNING, STATUS_AIMING, STATUS_COLLAPSING, STATUS_DEAD, STATUS_UNCONSCIOUS, STATUS_PANICKING, STATUS_BERSERK, STATUS_TIME_OUT};
+enum UnitStatus {STATUS_STANDING, STATUS_WALKING, STATUS_FLYING, STATUS_TURNING, STATUS_AIMING, STATUS_COLLAPSING, STATUS_DEAD, STATUS_UNCONSCIOUS, STATUS_PANICKING, STATUS_BERSERK, STATUS_IGNORE_ME};
 enum UnitFaction {FACTION_PLAYER, FACTION_HOSTILE, FACTION_NEUTRAL};
 enum UnitSide {SIDE_FRONT, SIDE_LEFT, SIDE_RIGHT, SIDE_REAR, SIDE_UNDER};
 enum UnitBodyPart {BODYPART_HEAD, BODYPART_TORSO, BODYPART_RIGHTARM, BODYPART_LEFTARM, BODYPART_RIGHTLEG, BODYPART_LEFTLEG};
@@ -457,9 +457,11 @@ public:
 	/// Puts the unit in the corner to think about what he's done.
 	void goToTimeOut();
 	/// Create special weapon for unit.
-	void setSpecialWeapon(SavedBattleGame *save, const Ruleset *rule);
+	void setSpecialWeapon(SavedBattleGame *save, const Mod *mod);
 	/// Get special weapon.
 	BattleItem *getSpecialWeapon(BattleType type) const;
+	/// Recovers the unit's time units and energy.
+	void recoverTimeUnits();
 };
 
 }

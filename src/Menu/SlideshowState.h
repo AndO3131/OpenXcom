@@ -20,7 +20,7 @@
 #define OPENXCOM_SLIDESHOWSTATE_H
 
 #include "../Engine/State.h"
-#include "../Ruleset/RuleVideo.h"
+#include "../Mod/RuleVideo.h"
 
 namespace OpenXcom
 {
@@ -40,7 +40,7 @@ private:
 	bool _wasLetterboxed;
 	std::vector<InteractiveSurface *> _slides;
 	std::vector<Text *>_captions;
-	unsigned int _curScreen;
+	int _curScreen;
 	Timer *_transitionTimer;
 public:
 	/// Creates the Slideshow state.

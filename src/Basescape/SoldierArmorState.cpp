@@ -19,18 +19,19 @@
 #include "SoldierArmorState.h"
 #include <sstream>
 #include "../Engine/Game.h"
-#include "../Resource/ResourcePack.h"
+#include "../Mod/Mod.h"
 #include "../Engine/LocalizedText.h"
 #include "../Engine/Options.h"
 #include "../Interface/TextButton.h"
 #include "../Interface/Window.h"
 #include "../Interface/Text.h"
 #include "../Interface/TextList.h"
-#include "../Ruleset/Armor.h"
+#include "../Mod/Armor.h"
 #include "../Savegame/SavedGame.h"
 #include "../Savegame/Soldier.h"
 #include "../Savegame/Base.h"
 #include "../Savegame/ItemContainer.h"
+#include "../Mod/Mod.h"
 
 namespace OpenXcom
 {
@@ -50,7 +51,7 @@ SoldierArmorState::SoldierArmorState(Base *base, size_t soldier) : _base(base), 
 	_btnCancel = new TextButton(140, 16, 90, 136);
 	_txtTitle = new Text(182, 16, 69, 48);
 	_txtType = new Text(90, 9, 80, 72);
-	_txtQuantity = new Text(70, 9, 177, 72);
+	_txtQuantity = new Text(70, 9, 190, 72);
 	_lstArmor = new TextList(160, 40, 73, 88);
 
 	// Set palette
@@ -66,7 +67,7 @@ SoldierArmorState::SoldierArmorState(Base *base, size_t soldier) : _base(base), 
 	centerAllSurfaces();
 
 	// Set up objects
-	_window->setBackground(_game->getResourcePack()->getSurface("BACK14.SCR"));
+	_window->setBackground(_game->getMod()->getSurface("BACK14.SCR"));
 
 	_btnCancel->setText(tr("STR_CANCEL_UC"));
 	_btnCancel->onMouseClick((ActionHandler)&SoldierArmorState::btnCancelClick);
@@ -80,15 +81,15 @@ SoldierArmorState::SoldierArmorState(Base *base, size_t soldier) : _base(base), 
 
 	_txtQuantity->setText(tr("STR_QUANTITY_UC"));
 
-	_lstArmor->setColumns(2, 112, 41);
+	_lstArmor->setColumns(2, 132, 21);
 	_lstArmor->setSelectable(true);
 	_lstArmor->setBackground(_window);
 	_lstArmor->setMargin(8);
 
-	const std::vector<std::string> &armors = _game->getRuleset()->getArmorsList();
+	const std::vector<std::string> &armors = _game->getMod()->getArmorsList();
 	for (std::vector<std::string>::const_iterator i = armors.begin(); i != armors.end(); ++i)
 	{
-		Armor *a = _game->getRuleset()->getArmor(*i);
+		Armor *a = _game->getMod()->getArmor(*i);
 		if (_base->getItems()->getItem(a->getStoreItem()) > 0)
 		{
 			_armors.push_back(a);

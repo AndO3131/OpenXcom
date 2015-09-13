@@ -22,7 +22,7 @@
 #include "../Engine/Options.h"
 #include "../Engine/LocalizedText.h"
 #include "../Engine/Screen.h"
-#include "../Resource/ResourcePack.h"
+#include "../Mod/Mod.h"
 #include "../Savegame/SavedGame.h"
 #include "../Savegame/SavedBattleGame.h"
 #include "../Interface/Window.h"
@@ -91,7 +91,7 @@ OptionsBaseState::OptionsBaseState(OptionsOrigin origin) : _origin(origin)
 	add(_txtTooltip, "tooltip", "optionsMenu");
 
 	// Set up objects
-	_window->setBackground(_game->getResourcePack()->getSurface("BACK01.SCR"));
+	_window->setBackground(_game->getMod()->getSurface("BACK01.SCR"));
 
 	_btnVideo->setText(tr("STR_VIDEO"));
 	_btnVideo->onMousePress((ActionHandler)&OptionsBaseState::btnGroupPress, SDL_BUTTON_LEFT);
@@ -249,7 +249,7 @@ void OptionsBaseState::btnCancelClick(Action *)
  * Restores the Options to default settings.
  * @param action Pointer to an action.
  */
-void OptionsBaseState::btnDefaultClick(Action *action)
+void OptionsBaseState::btnDefaultClick(Action *)
 {
 	_game->pushState(new OptionsDefaultsState(_origin, this));
 }

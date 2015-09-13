@@ -532,7 +532,7 @@ units: #done
     intelligence: 7
     aggression: 2
     livingWeapon: true
-    moveSound: 64
+    moveSound: 65
   - type: STR_BIODRONE_TERRORIST
     race: STR_BIODRONE
     rank: STR_LIVE_TERRORIST
@@ -581,7 +581,7 @@ units: #done
     standHeight: 18
     kneelHeight: 18
     value: 18
-    deathSound: 55 # check this
+    deathSound: -2
     intelligence: 3
     aggression: 2
     spawnUnit: STR_TENTACULAT_TERRORIST
