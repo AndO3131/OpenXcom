@@ -300,6 +300,7 @@ void Surface::loadImage(const std::string &filename)
 		throw Exception(err);
 	}
 
+	// Extra check to make sure surface declared 8bpp loads correctly even as 32bpp (for OSX)
 	if (_surface->format->BitsPerPixel != 8)
 	{
 		SDL_Color *pal = new SDL_Color[256];
