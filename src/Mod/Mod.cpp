@@ -2175,7 +2175,7 @@ namespace
 	{
 		static const Uint8 Hair = 9 << 4;
 		static const Uint8 Face = 6 << 4;
-		static inline void func(Uint8& src, const Uint8& cutoff, int, int, int)
+		static inline void func(Uint8& src, const Uint8& cutoff)
 		{
 			if (src > cutoff && src <= Face + ShadeMax)
 			{
@@ -2191,7 +2191,7 @@ namespace
 	{
 		static const Uint8 ManHairColor = 4 << 4;
 		static const Uint8 WomanHairColor = 1 << 4;
-		static inline void func(Uint8& src, int, int, int, int)
+		static inline void func(Uint8& src)
 		{
 			if (src >= WomanHairColor && src <= WomanHairColor + ShadeMax)
 			{
@@ -2207,7 +2207,7 @@ namespace
 	{
 		static const Uint8 FaceColor = 10 << 4;
 		static const Uint8 PinkColor = 14 << 4;
-		static inline void func(Uint8& src, int, int, int, int)
+		static inline void func(Uint8& src)
 		{
 			if (src >= FaceColor && src <= FaceColor + ShadeMax)
 			{
@@ -2222,7 +2222,7 @@ namespace
 	struct BodyXCOM2
 	{
 		static const Uint8 IonArmorColor = 8 << 4;
-		static inline void func(Uint8& src, int, int, int, int)
+		static inline void func(Uint8& src)
 		{
 			if (src == 153)
 			{
@@ -2252,7 +2252,7 @@ namespace
 	struct FallXCOM2
 	{
 		static const Uint8 RoguePixel = 151;
-		static inline void func(Uint8& src, int, int, int, int)
+		static inline void func(Uint8& src)
 		{
 			if (src == RoguePixel)
 			{
@@ -2842,13 +2842,13 @@ void Mod::loadExtraResources()
 			if (_surfaces.find(sheetName) == _surfaces.end())
 			{
 				Log(LOG_VERBOSE) << "Creating new single image: " << sheetName;
-				_surfaces[sheetName] = new Surface(spritePack->getWidth(), spritePack->getHeight());
+				_surfaces[sheetName] = new Surface(spritePack->getWidth(), spritePack->getHeight(), 0, 0, 32);
 			}
 			else
 			{
 				Log(LOG_VERBOSE) << "Adding/Replacing single image: " << sheetName;
 				delete _surfaces[sheetName];
-				_surfaces[sheetName] = new Surface(spritePack->getWidth(), spritePack->getHeight());
+				_surfaces[sheetName] = new Surface(spritePack->getWidth(), spritePack->getHeight(), 0, 0, 32);
 			}
 			_surfaces[sheetName]->loadImage(FileMap::getFilePath((*spritePack->getSprites())[0]));
 		}
@@ -2904,12 +2904,12 @@ void Mod::loadExtraResources()
 							{
 								if (adding)
 								{
-									_sets[sheetName]->addFrame(offset)->loadImage(fullPath);
+									_sets[sheetName]->addFrame(offset, 32)->loadImage(fullPath);
 								}
 								else
 								{
 									Log(LOG_VERBOSE) << "Adding frame: " << offset + spritePack->getModIndex();
-									_sets[sheetName]->addFrame(offset + spritePack->getModIndex())->loadImage(fullPath);
+									_sets[sheetName]->addFrame(offset + spritePack->getModIndex(), 32)->loadImage(fullPath);
 								}
 							}
 							offset++;
@@ -2933,12 +2933,12 @@ void Mod::loadExtraResources()
 						else
 						{
 							Log(LOG_VERBOSE) << "Adding frame: " << startFrame << ", using index: " << startFrame + spritePack->getModIndex();
-							_sets[sheetName]->addFrame(startFrame + spritePack->getModIndex())->loadImage(fullPath);
+							_sets[sheetName]->addFrame(startFrame + spritePack->getModIndex(), 32)->loadImage(fullPath);
 						}
 					}
 					else
 					{
-						Surface *temp = new Surface(spritePack->getWidth(), spritePack->getHeight());
+						Surface *temp = new Surface(spritePack->getWidth(), spritePack->getHeight(), 0, 0, 32);
 						temp->loadImage(FileMap::getFilePath((*spritePack->getSprites())[startFrame]));
 						int xDivision = spritePack->getWidth() / spritePack->getSubX();
 						int yDivision = spritePack->getHeight() / spritePack->getSubY();
@@ -2960,13 +2960,13 @@ void Mod::loadExtraResources()
 									if (adding)
 									{
 										// for some reason regular blit() doesn't work here how i want it, so i use this function instead.
-										temp->blitNShade(_sets[sheetName]->addFrame(offset), 0 - (x * spritePack->getSubX()), 0 - (y * spritePack->getSubY()), 0);
+										temp->blitNShade(_sets[sheetName]->addFrame(offset, 32), 0 - (x * spritePack->getSubX()), 0 - (y * spritePack->getSubY()), 0);
 									}
 									else
 									{
 										Log(LOG_VERBOSE) << "Adding frame: " << offset + spritePack->getModIndex();
 										// for some reason regular blit() doesn't work here how i want it, so i use this function instead.
-										temp->blitNShade(_sets[sheetName]->addFrame(offset + spritePack->getModIndex()), 0 - (x * spritePack->getSubX()), 0 - (y * spritePack->getSubY()), 0);
+										temp->blitNShade(_sets[sheetName]->addFrame(offset + spritePack->getModIndex(), 32), 0 - (x * spritePack->getSubX()), 0 - (y * spritePack->getSubY()), 0);
 									}
 								}
 								++offset;
@@ -3120,7 +3120,7 @@ void Mod::modResources()
 	std::map<int, Surface*> *handob = _sets["HANDOB.PCK"]->getFrames();
 	for (std::map<int, Surface*>::const_iterator i = handob->begin(); i != handob->end(); ++i)
 	{
-		Surface *surface1 = _sets["HANDOB2.PCK"]->addFrame(i->first);
+		Surface *surface1 = _sets["HANDOB2.PCK"]->addFrame(i->first, i->second->getSurface()->format->BitsPerPixel);
 		Surface *surface2 = i->second;
 		surface1->setPalette(surface2->getPalette());
 		surface2->blit(surface1);

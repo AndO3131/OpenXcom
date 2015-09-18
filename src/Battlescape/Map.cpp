@@ -982,7 +982,7 @@ void Map::drawTerrain(Surface *surface)
 							1, 3,
 						};
 						ShaderMove<int> posSurf = ShaderSurface(array, 2, 2);
-						const std::vector<SDL_Color> &trans = *_game->getRuleset()->getTransparencies();
+						const std::vector<SDL_Color> &trans = *_game->getMod()->getTransparencies();
 
 						for (std::list<Particle*>::const_iterator i = tile->getParticleCloud()->begin(); i != tile->getParticleCloud()->end(); ++i)
 						{
@@ -1606,7 +1606,7 @@ void Map::cacheUnits()
 void Map::cacheUnit(BattleUnit *unit)
 {
 	// Cache surface bpp matches first armor sprite
-	int bpp = _res->getSurfaceSet(unit->getArmor()->getSpriteSheet())->getFrame(0)->getSurface()->format->BitsPerPixel;
+	int bpp = _game->getMod()->getSurfaceSet(unit->getArmor()->getSpriteSheet())->getFrame(0)->getSurface()->format->BitsPerPixel;
 	UnitSprite *unitSprite = new UnitSprite(unit->getStatus() == STATUS_AIMING ? _spriteWidth * 2: _spriteWidth, _spriteHeight, 0, 0, _save->getDepth() != 0, bpp);
 	unitSprite->setPalette(this->getPalette());
 	bool invalid, dummy;
