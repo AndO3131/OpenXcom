@@ -299,6 +299,12 @@ void Surface::loadImage(const std::string &filename)
 		std::string err = filename + ":" + IMG_GetError();
 		throw Exception(err);
 	}
+
+	if (_surface->format->BitsPerPixel != 8)
+	{
+		SDL_Color *pal = new SDL_Color[256];
+		_palette = pal;
+	}
 }
 
 /**
