@@ -37,12 +37,11 @@ namespace OpenXcom
  * Initializes a new soldier, either blank or randomly generated.
  * @param rules Soldier ruleset.
  * @param armor Soldier armor.
- * @param names List of name pools for soldier generation.
- * @param id Pointer to unique soldier id for soldier generation.
+ * @param id Unique soldier id for soldier generation.
  */
-Soldier::Soldier(RuleSoldier *rules, Armor *armor, const std::vector<SoldierNamePool*> *names, int id) : _id(id), _improvement(0), _psiStrImprovement(0), _rules(rules), _rank(RANK_ROOKIE), _craft(0), _gender(GENDER_MALE), _look(LOOK_BLONDE), _missions(0), _kills(0), _recovery(0), _recentlyPromoted(false), _psiTraining(false), _armor(armor), _death(0)
+Soldier::Soldier(RuleSoldier *rules, Armor *armor, int id) : _id(id), _improvement(0), _psiStrImprovement(0), _rules(rules), _rank(RANK_ROOKIE), _craft(0), _gender(GENDER_MALE), _look(LOOK_BLONDE), _missions(0), _kills(0), _recovery(0), _recentlyPromoted(false), _psiTraining(false), _armor(armor), _death(0)
 {
-	if (names != 0)
+	if (id != 0)
 	{
 		UnitStats minStats = rules->getMinStats();
 		UnitStats maxStats = rules->getMaxStats();
@@ -61,11 +60,12 @@ Soldier::Soldier(RuleSoldier *rules, Armor *armor, const std::vector<SoldierName
 
 		_currentStats = _initialStats;	
 
-		if (!names->empty())
+		const std::vector<SoldierNamePool*> &names = rules->getNames();
+		if (!names.empty())
 		{
-			size_t nationality = RNG::generate(0, names->size()-1);
-			_name = names->at(nationality)->genName(&_gender, rules->getFemaleFrequency());
-			_look = (SoldierLook)names->at(nationality)->genLook(4); // Once we add the ability to mod in extra looks, this will need to reference the ruleset for the maximum amount of looks.
+			size_t nationality = RNG::generate(0, names.size() - 1);
+			_name = names.at(nationality)->genName(&_gender, rules->getFemaleFrequency());
+			_look = (SoldierLook)names.at(nationality)->genLook(4); // Once we add the ability to mod in extra looks, this will need to reference the ruleset for the maximum amount of looks.
 		}
 		else
 		{
@@ -109,7 +109,7 @@ void Soldier::load(const YAML::Node& node, const Mod *mod, SavedGame *save)
 	Armor *armor = mod->getArmor(node["armor"].as<std::string>());
 	if (armor == 0)
 	{
-		armor = mod->getArmor("STR_NONE_UC");
+		armor = mod->getArmor(mod->getSoldier(mod->getSoldiersList().front())->getArmor());
 	}
 	_armor = armor;
 	_psiTraining = node["psiTraining"].as<bool>(_psiTraining);
@@ -145,6 +145,7 @@ void Soldier::load(const YAML::Node& node, const Mod *mod, SavedGame *save)
 YAML::Node Soldier::save() const
 {
 	YAML::Node node;
+	node["type"] = _rules->getType();
 	node["id"] = _id;
 	node["name"] = Language::wstrToUtf8(_name);
 	node["initialStats"] = _initialStats;

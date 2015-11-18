@@ -38,8 +38,8 @@
 #include "SellState.h"
 #include "SoldierArmorState.h"
 #include "SackSoldierState.h"
-#include "../Mod/Mod.h"
 #include "../Mod/RuleInterface.h"
+#include "../Mod/RuleSoldier.h"
 
 namespace OpenXcom
 {
@@ -397,7 +397,7 @@ void SoldierInfoState::init()
 
 	std::wstring wsArmor;
 	std::string armorType = _soldier->getArmor()->getType();
-	if (armorType == "STR_NONE_UC")
+	if (armorType == _soldier->getRules()->getArmor())
 	{
 		wsArmor= tr("STR_ARMOR_").arg(tr(armorType));
 	}

@@ -32,7 +32,6 @@
 #include "../Interface/ArrowButton.h"
 #include "../Engine/Timer.h"
 #include "../Engine/RNG.h"
-#include "../Mod/Mod.h"
 #include <limits>
 
 namespace OpenXcom
@@ -124,7 +123,7 @@ void ResearchInfoState::buildUi()
 				(_game->getMod()->getUnit(_rule->getName()) ||
 				 Options::spendResearchedItems))
 		{
-			_base->getItems()->removeItem(_rule->getName(), 1);
+			_base->getStorageItems()->removeItem(_rule->getName(), 1);
 		}
 	}
 	setAssignedScientist();
@@ -158,8 +157,8 @@ void ResearchInfoState::buildUi()
 }
 
 /**
-* Frees up memory that's not automatically cleaned on exit
-*/
+ * Frees up memory that's not automatically cleaned on exit
+ */
 ResearchInfoState::~ResearchInfoState()
 {
 	delete _timerLess;
@@ -187,7 +186,7 @@ void ResearchInfoState::btnCancelClick(Action *)
 			(_game->getMod()->getUnit(ruleResearch->getName()) ||
 			 Options::spendResearchedItems))
 	{
-		_base->getItems()->addItem(ruleResearch->getName(), 1);
+		_base->getStorageItems()->addItem(ruleResearch->getName(), 1);
 	}
 	_base->removeResearch(_project);
 	_game->popState();

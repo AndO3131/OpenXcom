@@ -50,12 +50,15 @@
 #include "AlienStrategy.h"
 #include "AlienMission.h"
 #include "../Mod/RuleResearch.h"
+#include "../Mod/RuleRegion.h"
 #include "../Mod/ArticleDefinition.h"
 #include "ResearchProject.h"
 #include "../Mod/RuleManufacture.h"
 #include "Production.h"
 #include "../Mod/Armor.h"
 #include "../Mod/UfoTrajectory.h"
+#include "../Mod/RuleSoldier.h"
+#include "../Engine/RNG.h"
 
 namespace OpenXcom
 {
@@ -294,7 +297,7 @@ void SaveConverter::graphVector(std::vector<T> &vector, int month, bool year)
 	{
 		std::vector<T> newVector;
 		int i = month;
-		do 
+		do
 		{
 			newVector.push_back(vector[i]);
 			i = (i + 1) % vector.size();
@@ -533,7 +536,7 @@ void SaveConverter::loadDatDiplom()
 		}
 		bool pact = satisfaction == 0;
 		bool newPact = load<Sint16>(cdata + 0x1E) != 0;
-		
+
 		if (pact)
 			country->setPact();
 		if (newPact)
@@ -623,6 +626,19 @@ void SaveConverter::loadDatMissions()
 			node["nextUfoCounter"] = ufoCounter;
 			node["spawnCountdown"] = spawn;
 			node["uniqueID"] = _save->getId("ALIEN_MISSIONS");
+			if (m->getRules().getObjective() == OBJECTIVE_SITE)
+			{
+				if (_mod->getRegion(_idRegions[region])->getMissionZones().size() >= 3)
+				{
+					// pick a city for terror missions
+					node["missionSiteZone"] = RNG::generate(0, _mod->getRegion(_idRegions[region])->getMissionZones().at(3).areas.size() - 1); 
+				}
+				else
+				{
+					// try to account for TFTD's artefacts and such
+					node["missionSiteZone"] = RNG::generate(0, _mod->getRegion(_idRegions[region])->getMissionZones().at(0).areas.size() - 1);
+				}
+			}
 			m->load(node, *_save);
 			_save->getAlienMissions().push_back(m);
 			_missions[std::make_pair(mission, region)] = m;
@@ -774,7 +790,7 @@ void SaveConverter::loadDatBase()
 				int qty = load<Uint16>(bdata + 0x60 + j * 2);
 				if (qty != 0 && !_idItems[j].empty())
 				{
-					base->getItems()->addItem(_idItems[j], qty);
+					base->getStorageItems()->addItem(_idItems[j], qty);
 				}
 			}
 			base->setEngineers(engineers);
@@ -817,7 +833,7 @@ void SaveConverter::loadDatAStore()
 			if (base != 0xFF)
 			{
 				Base *b = dynamic_cast<Base*>(_targets[base]);
-				b->getItems()->addItem(liveAlien);
+				b->getStorageItems()->addItem(liveAlien);
 			}
 		}
 		_aliens.push_back(liveAlien);
@@ -1083,7 +1099,7 @@ void SaveConverter::loadDatSoldier()
 			node["look"] = (int)load<Uint8>(sdata + 0x43);
 			node["id"] = _save->getId("STR_SOLDIER");
 
-			Soldier *soldier = new Soldier(_mod->getSoldier("XCOM"), _mod->getArmor("STR_NONE_UC"));
+			Soldier *soldier = new Soldier(_mod->getSoldier(_mod->getSoldiersList().front()), 0);
 			soldier->load(node, _mod, _save);
 			if (base != 0xFFFF)
 			{
@@ -1261,7 +1277,7 @@ void SaveConverter::loadDatXBases()
 			}
 		}
 	}
-	
+
 }
 
 }

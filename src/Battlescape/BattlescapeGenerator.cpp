@@ -234,40 +234,44 @@ void BattlescapeGenerator::nextStage()
 			// if it's recoverable, and it's not owned by someone
 			if ((*i)->getRules()->isRecoverable() && !(*i)->getOwner())
 			{
-				// protocol 1: all defenders dead, recover all items.
-				if (aliensAlive == 0)
+				// first off: don't count primed grenades on the floor
+				if ((*i)->getFuseTimer() == -1)
 				{
-					// any corpses or unconscious units get put in the skyranger, as well as any unresearched items
-					if ((*i)->getUnit() || !_game->getSavedGame()->isResearched((*i)->getRules()->getRequirements()))
+					// protocol 1: all defenders dead, recover all items.
+					if (aliensAlive == 0)
 					{
-						toContainer = takeHomeGuaranteed;
+						// any corpses or unconscious units get put in the skyranger, as well as any unresearched items
+						if ((*i)->getUnit() || !_game->getSavedGame()->isResearched((*i)->getRules()->getRequirements()))
+						{
+							toContainer = takeHomeGuaranteed;
+						}
+						// otherwise it comes with us to stage two
+						else
+						{
+							toContainer = &takeToNextStage;
+						}
 					}
-					// otherwise it comes with us to stage two
+					// protocol 2: some of the aliens survived, meaning we ran to the exit zone.
+					// recover stuff depending on where it was at the end of the mission.
 					else
 					{
-						toContainer = &takeToNextStage;
-					}
-				}
-				// protocol 2: some of the aliens survived, meaning we ran to the exit zone.
-				// recover stuff depending on where it was at the end of the mission.
-				else
-				{
-					Tile *tile = (*i)->getTile();
-					if (tile)
-					{
-						// on a tile at least, so i'll give you the benefit of the doubt on this and give it a conditional recovery at this point
-						toContainer = takeHomeConditional;
-						if (tile->getMapData(O_FLOOR))
+						Tile *tile = (*i)->getTile();
+						if (tile)
 						{
-							// in the skyranger? it goes home.
-							if (tile->getMapData(O_FLOOR)->getSpecialType() == START_POINT)
+							// on a tile at least, so i'll give you the benefit of the doubt on this and give it a conditional recovery at this point
+							toContainer = takeHomeConditional;
+							if (tile->getMapData(O_FLOOR))
 							{
-								toContainer = takeHomeGuaranteed;
-							}
-							// on the exit grid? it goes to stage two.
-							else if (tile->getMapData(O_FLOOR)->getSpecialType() == END_POINT)
-							{
-								toContainer = &takeToNextStage;
+								// in the skyranger? it goes home.
+								if (tile->getMapData(O_FLOOR)->getSpecialType() == START_POINT)
+								{
+									toContainer = takeHomeGuaranteed;
+								}
+								// on the exit grid? it goes to stage two.
+								else if (tile->getMapData(O_FLOOR)->getSpecialType() == END_POINT)
+								{
+									toContainer = &takeToNextStage;
+								}
 							}
 						}
 					}
@@ -551,10 +555,10 @@ void BattlescapeGenerator::run()
 }
 
 /**
-* Deploys all the X-COM units and equipment based
-* on the Geoscape base / craft.
-* @param inventoryTile The tile to place all the extra equipment on.
-*/
+ * Deploys all the X-COM units and equipment based
+ * on the Geoscape base / craft.
+ * @param inventoryTile The tile to place all the extra equipment on.
+ */
 void BattlescapeGenerator::deployXCOM()
 {
 	RuleInventory *ground = _game->getMod()->getInventory("STR_GROUND");
@@ -647,7 +651,7 @@ void BattlescapeGenerator::deployXCOM()
 		if (_game->getSavedGame()->getMonthsPassed() != -1)
 		{
 			// add items that are in the base
-			for (std::map<std::string, int>::iterator i = _base->getItems()->getContents()->begin(); i != _base->getItems()->getContents()->end();)
+			for (std::map<std::string, int>::iterator i = _base->getStorageItems()->getContents()->begin(); i != _base->getStorageItems()->getContents()->end();)
 			{
 				// only put items in the battlescape that make sense (when the item got a sprite, it's probably ok)
 				RuleItem *rule = _game->getMod()->getItem(i->first);
@@ -659,7 +663,7 @@ void BattlescapeGenerator::deployXCOM()
 					}
 					std::map<std::string, int>::iterator tmp = i;
 					++i;
-					_base->getItems()->removeItem(tmp->first, tmp->second);
+					_base->getStorageItems()->removeItem(tmp->first, tmp->second);
 				}
 				else
 				{
@@ -1720,10 +1724,10 @@ bool BattlescapeGenerator::placeUnitNearFriend(BattleUnit *unit)
 
 
 /**
-* Creates a mini-battle-save for managing inventory from the Geoscape.
-* Kids, don't try this at home!
-* @param craft Pointer to craft to manage.
-*/
+ * Creates a mini-battle-save for managing inventory from the Geoscape.
+ * Kids, don't try this at home!
+ * @param craft Pointer to craft to manage.
+ */
 void BattlescapeGenerator::runInventory(Craft *craft)
 {
 	// we need to fake a map for soldier placement
@@ -1804,7 +1808,7 @@ void BattlescapeGenerator::generateMap(const std::vector<MapScript*> *script)
 	init();
 
 	MapBlock* craftMap = 0;
-	MapBlock* ufoMap = 0;
+	std::vector<MapBlock*> ufoMaps;
 
 	int mapDataSetIDOffset = 0;
 	int craftDataSetIDOffset = 0;
@@ -1823,6 +1827,7 @@ void BattlescapeGenerator::generateMap(const std::vector<MapScript*> *script)
 		mapDataSetIDOffset++;
 	}
 
+	RuleTerrain* ufoTerrain = 0;
 	// lets generate the map now and store it inside the tile objects
 
 	// this mission type is "hard-coded" in terms of map layout
@@ -1924,14 +1929,26 @@ void BattlescapeGenerator::generateMap(const std::vector<MapScript*> *script)
 				case MSC_ADDUFO:
 					// as above, note that the craft and the ufo will never be allowed to overlap.
 					// TODO: make _ufopos a vector ;)
-					if (_ufo)
+					if (_game->getMod()->getUfo(command->getUFOName()))
 					{
-						ufoMap = _ufo->getRules()->getBattlescapeTerrainData()->getRandomMapBlock(999, 999, 0, false);
-						if (addCraft(ufoMap, command, _ufoPos))
+						ufoTerrain = _game->getMod()->getUfo(command->getUFOName())->getBattlescapeTerrainData();
+					}
+					else if (_ufo)
+					{
+						ufoTerrain = _ufo->getRules()->getBattlescapeTerrainData();
+					}
+
+					if (ufoTerrain)
+					{
+						MapBlock *ufoMap = ufoTerrain->getRandomMapBlock(999, 999, 0, false);
+						SDL_Rect ufoPosTemp;
+						if (addCraft(ufoMap, command, ufoPosTemp))
 						{
-							for (x = _ufoPos.x; x < _ufoPos.x + _ufoPos.w; ++x)
+							_ufoPos.push_back(ufoPosTemp);
+							ufoMaps.push_back(ufoMap);
+							for (x = ufoPosTemp.x; x < ufoPosTemp.x + ufoPosTemp.w; ++x)
 							{
-								for (y = _ufoPos.y; y < _ufoPos.y + _ufoPos.h; ++y)
+								for (y = ufoPosTemp.y; y < ufoPosTemp.y + ufoPosTemp.h; ++y)
 								{
 									if (_blocks[x][y])
 									{
@@ -2037,9 +2054,9 @@ void BattlescapeGenerator::generateMap(const std::vector<MapScript*> *script)
 
 	loadNodes();
 
-	if (ufoMap)
+	if (!ufoMaps.empty() && ufoTerrain)
 	{
-		for (std::vector<MapDataSet*>::iterator i = _ufo->getRules()->getBattlescapeTerrainData()->getMapDataSets()->begin(); i != _ufo->getRules()->getBattlescapeTerrainData()->getMapDataSets()->end(); ++i)
+		for (std::vector<MapDataSet*>::iterator i = ufoTerrain->getMapDataSets()->begin(); i != ufoTerrain->getMapDataSets()->end(); ++i)
 		{
 			(*i)->loadData();
 			if (_game->getMod()->getMCDPatch((*i)->getName()))
@@ -2051,13 +2068,16 @@ void BattlescapeGenerator::generateMap(const std::vector<MapScript*> *script)
 		}
 		// TODO: put ufo positions in a vector rather than a single rect, and iterate here?
 		// will probably need to make ufomap a vector too i suppose.
-		loadMAP(ufoMap, _ufoPos.x * 10, _ufoPos.y * 10, _ufo->getRules()->getBattlescapeTerrainData(), mapDataSetIDOffset);
-		loadRMP(ufoMap, _ufoPos.x * 10, _ufoPos.y * 10, Node::UFOSEGMENT);
-		for (int i = 0; i < ufoMap->getSizeX() / 10; ++i)
+		for (size_t i = 0; i < ufoMaps.size(); ++i)
 		{
-			for (int j = 0; j < ufoMap->getSizeY() / 10; j++)
+			loadMAP(ufoMaps[i], _ufoPos[i].x * 10, _ufoPos[i].y * 10, ufoTerrain, mapDataSetIDOffset);
+			loadRMP(ufoMaps[i], _ufoPos[i].x * 10, _ufoPos[i].y * 10, Node::UFOSEGMENT);
+			for (int j = 0; j < ufoMaps[i]->getSizeX() / 10; ++j)
 			{
-				_segments[_ufoPos.x + i][_ufoPos.y + j] = Node::UFOSEGMENT;
+				for (int k = 0; k < ufoMaps[i]->getSizeY() / 10; k++)
+				{
+					_segments[_ufoPos[i].x + j][_ufoPos[i].y + k] = Node::UFOSEGMENT;
+				}
 			}
 		}
 	}
@@ -2098,7 +2118,7 @@ void BattlescapeGenerator::generateMap(const std::vector<MapScript*> *script)
 	}
 
 	delete _dummy;
-	
+
 	// special hacks to fill in empty floors on level 0
 	for (int x = 0; x < _mapsize_x; ++x)
 	{

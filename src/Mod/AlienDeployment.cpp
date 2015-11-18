@@ -113,7 +113,7 @@ namespace OpenXcom
  * type of deployment data.
  * @param type String defining the type.
  */
-AlienDeployment::AlienDeployment(const std::string &type) : _type(type), _width(0), _length(0), _height(0), _civilians(0), _shade(-1), _finalDestination(false), _markerIcon(-1), _durationMin(0), _durationMax(0),
+AlienDeployment::AlienDeployment(const std::string &type) : _type(type), _width(0), _length(0), _height(0), _civilians(0), _shade(-1), _finalDestination(false), _alert("STR_ALIENS_TERRORISE"), _alertBackground("BACK03.SCR"), _markerName("STR_TERROR_SITE"), _markerIcon(-1), _durationMin(0), _durationMax(0),
 	_minDepth(0), _maxDepth(0), _minSiteDepth(0), _maxSiteDepth(0), _objectiveType(-1), _objectivesRequired(0), _objectiveCompleteScore(0), _objectiveFailedScore(0), _despawnPenalty(0), _points(0)
 {
 }
@@ -146,6 +146,7 @@ void AlienDeployment::load(const YAML::Node &node)
 	_loseCutscene = node["loseCutscene"].as<std::string>(_loseCutscene);
 	_script = node["script"].as<std::string>(_script);
 	_alert = node["alert"].as<std::string>(_alert);
+	_alertBackground = node["alertBackground"].as<std::string>(_alertBackground);
 	_briefingData = node["briefing"].as<BriefingData>(_briefingData);
 	_markerName = node["markerName"].as<std::string>(_markerName);
 	_markerIcon = node["markerIcon"].as<int>(_markerIcon);
@@ -306,6 +307,15 @@ std::string AlienDeployment::getLoseCutscene() const
 std::string AlienDeployment::getAlertMessage() const
 {
 	return _alert;
+}
+
+/**
+* Gets the alert background displayed when this mission spawns.
+* @return Sprite ID for the background.
+*/
+std::string AlienDeployment::getAlertBackground() const
+{
+	return _alertBackground;
 }
 
 /**

@@ -27,6 +27,16 @@ namespace OpenXcom
 
 enum TransferType { TRANSFER_ITEM, TRANSFER_CRAFT, TRANSFER_SOLDIER, TRANSFER_SCIENTIST, TRANSFER_ENGINEER };
 
+struct TransferRow
+{
+	TransferType type;
+	void *rule;
+	std::wstring name;
+	int cost;
+	int qtySrc, qtyDst;
+	int amount;
+};
+
 class Soldier;
 class Craft;
 class Language;

@@ -44,6 +44,7 @@
 #include "Ufo.h"
 #include "../Engine/RNG.h"
 #include "../Engine/Options.h"
+#include "../Mod/RuleSoldier.h"
 
 namespace OpenXcom
 {
@@ -135,22 +136,26 @@ void Base::load(const YAML::Node &node, SavedGame *save, bool newGame, bool newB
 
 	for (YAML::const_iterator i = node["soldiers"].begin(); i != node["soldiers"].end(); ++i)
 	{
-		Soldier *s = new Soldier(_mod->getSoldier("XCOM"), _mod->getArmor("STR_NONE_UC"));
-		s->load(*i, _mod, save);
-		s->setCraft(0);
-		if (const YAML::Node &craft = (*i)["craft"])
+		std::string type = (*i)["type"].as<std::string>(_mod->getSoldiersList().front());
+		if (_mod->getSoldier(type))
 		{
-			CraftId craftId = Craft::loadId(craft);
-			for (std::vector<Craft*>::iterator j = _crafts.begin(); j != _crafts.end(); ++j)
+			Soldier *s = new Soldier(_mod->getSoldier(type), 0);
+			s->load(*i, _mod, save);
+			s->setCraft(0);
+			if (const YAML::Node &craft = (*i)["craft"])
 			{
-				if ((*j)->getUniqueId() == craftId)
+				CraftId craftId = Craft::loadId(craft);
+				for (std::vector<Craft*>::iterator j = _crafts.begin(); j != _crafts.end(); ++j)
 				{
-					s->setCraft(*j);
-					break;
+					if ((*j)->getUniqueId() == craftId)
+					{
+						s->setCraft(*j);
+						break;
+					}
 				}
 			}
+			_soldiers.push_back(s);
 		}
-		_soldiers.push_back(s);
 	}
 
 	_items->load(node["items"]);
@@ -335,10 +340,11 @@ std::vector<Transfer*> *Base::getTransfers()
 }
 
 /**
- * Returns the list of items in the base.
+ * Returns the list of items in the base storage rooms.
+ * Does NOT return items assigned to craft or in transfer.
  * @return Pointer to the item list.
  */
-ItemContainer *Base::getItems()
+ItemContainer *Base::getStorageItems()
 {
 	return _items;
 }
@@ -458,7 +464,7 @@ int Base::getAvailableSoldiers(bool checkCombatReadiness) const
 		{
 			total++;
 		}
-		else if (checkCombatReadiness && (((*i)->getCraft() != 0 && (*i)->getCraft()->getStatus() != "STR_OUT") || 
+		else if (checkCombatReadiness && (((*i)->getCraft() != 0 && (*i)->getCraft()->getStatus() != "STR_OUT") ||
 			((*i)->getCraft() == 0 && (*i)->getWoundRecovery() == 0)))
 		{
 			total++;
@@ -662,7 +668,7 @@ double Base::getIgnoredStores()
 				if (*w != 0 && (*w)->isRearming())
 				{
 					std::string clip = (*w)->getRules()->getClipItem();
-					int available = getItems()->getItem(clip);
+					int available = getStorageItems()->getItem(clip);
 					if (!clip.empty() && available > 0)
 					{
 						int clipSize = _mod->getItem(clip)->getClipSize();
@@ -752,7 +758,7 @@ int Base::getAvailableWorkshops() const
 /**
  * Returns the amount of hangars used up
  * by crafts in the base.
- * @return Storage space.
+ * @return Number of hangars.
  */
 int Base::getUsedHangars() const
 {
@@ -796,7 +802,7 @@ int Base::getAvailableHangars() const
 /**
  * Return laboratories space not used by a ResearchProject
  * @return laboratories space not used by a ResearchProject
-*/
+ */
 int Base::getFreeLaboratories() const
 {
 	return getAvailableLaboratories() - getUsedLaboratories();
@@ -805,7 +811,7 @@ int Base::getFreeLaboratories() const
 /**
  * Return workshop space not used by a Production
  * @return workshop space not used by a Production
-*/
+ */
 int Base::getFreeWorkshops() const
 {
 	return getAvailableWorkshops() - getUsedWorkshops();
@@ -814,7 +820,7 @@ int Base::getFreeWorkshops() const
 /**
  * Return psilab space not in use
  * @return psilab space not in use
-*/
+ */
 int Base::getFreePsiLabs() const
 {
 	return getAvailablePsiLabs() - getUsedPsiLabs();
@@ -823,7 +829,7 @@ int Base::getFreePsiLabs() const
 /**
  * Return containment space not in use
  * @return containment space not in use
-*/
+ */
 int Base::getFreeContainment() const
 {
 	return getAvailableContainment() - getUsedContainment();
@@ -832,7 +838,7 @@ int Base::getFreeContainment() const
 /**
  * Returns the amount of scientists currently in use.
  * @return Amount of scientists.
-*/
+ */
 int Base::getAllocatedScientists() const
 {
 	int total = 0;
@@ -849,7 +855,7 @@ int Base::getAllocatedScientists() const
 /**
  * Returns the amount of engineers currently in use.
  * @return Amount of engineers.
-*/
+ */
 int Base::getAllocatedEngineers() const
 {
 	int total = 0;
@@ -928,6 +934,13 @@ int Base::getLongRangeDetection() const
 int Base::getCraftCount(const std::string &craft) const
 {
 	int total = 0;
+	for (std::vector<Transfer*>::const_iterator i = _transfers.begin(); i != _transfers.end(); ++i)
+	{
+		if ((*i)->getType() == TRANSFER_CRAFT && (*i)->getCraft()->getRules()->getType() == craft)
+		{
+			total++;
+		}
+	}
 	for (std::vector<Craft*>::const_iterator i = _crafts.begin(); i != _crafts.end(); ++i)
 	{
 		if ((*i)->getRules()->getType() == craft)
@@ -946,9 +959,42 @@ int Base::getCraftCount(const std::string &craft) const
 int Base::getCraftMaintenance() const
 {
 	int total = 0;
+	for (std::vector<Transfer*>::const_iterator i = _transfers.begin(); i != _transfers.end(); ++i)
+	{
+		if ((*i)->getType() == TRANSFER_CRAFT)
+		{
+			total += (*i)->getCraft()->getRules()->getRentCost();
+		}
+	}
 	for (std::vector<Craft*>::const_iterator i = _crafts.begin(); i != _crafts.end(); ++i)
 	{
 		total += (*i)->getRules()->getRentCost();
+	}
+	return total;
+}
+
+/**
+ * Returns the total amount of soldiers of
+ * a certain type stored in the base.
+ * @param soldier Soldier type.
+ * @return Number of soldiert.
+ */
+int Base::getSoldierCount(const std::string &soldier) const
+{
+	int total = 0;
+	for (std::vector<Transfer*>::const_iterator i = _transfers.begin(); i != _transfers.end(); ++i)
+	{
+		if ((*i)->getType() == TRANSFER_SOLDIER && (*i)->getSoldier()->getRules()->getType() == soldier)
+		{
+			total++;
+		}
+	}
+	for (std::vector<Soldier*>::const_iterator i = _soldiers.begin(); i != _soldiers.end(); ++i)
+	{
+		if ((*i)->getRules()->getType() == soldier)
+		{
+			total++;
+		}
 	}
 	return total;
 }
@@ -960,8 +1006,18 @@ int Base::getCraftMaintenance() const
  */
 int Base::getPersonnelMaintenance() const
 {
-	size_t total = 0;
-	total += getTotalSoldiers() * _mod->getSoldierCost();
+	int total = 0;
+	for (std::vector<Transfer*>::const_iterator i = _transfers.begin(); i != _transfers.end(); ++i)
+	{
+		if ((*i)->getType() == TRANSFER_SOLDIER)
+		{
+			total += (*i)->getSoldier()->getRules()->getSalaryCost();
+		}
+	}
+	for (std::vector<Soldier*>::const_iterator i = _soldiers.begin(); i != _soldiers.end(); ++i)
+	{
+		total += (*i)->getRules()->getSalaryCost();
+	}
 	total += getTotalEngineers() * _mod->getEngineerCost();
 	total += getTotalScientists() * _mod->getScientistCost();
 	return total;
@@ -998,7 +1054,7 @@ int Base::getMonthlyMaintenace() const
 /**
  * Returns the list of all base's ResearchProject
  * @return list of base's ResearchProject
-*/
+ */
 const std::vector<ResearchProject *> & Base::getResearch() const
 {
 	return _research;
@@ -1007,7 +1063,7 @@ const std::vector<ResearchProject *> & Base::getResearch() const
 /**
  * Add a new Production to the Base
  * @param p A pointer to a Production
-*/
+ */
 void Base::addProduction (Production * p)
 {
 	_productions.push_back(p);
@@ -1016,7 +1072,7 @@ void Base::addProduction (Production * p)
 /**
  * Add A new ResearchProject to Base
  * @param project The project to add
-*/
+ */
 void Base::addResearch(ResearchProject * project)
 {
 	_research.push_back(project);
@@ -1025,7 +1081,7 @@ void Base::addResearch(ResearchProject * project)
 /**
  * Remove a ResearchProject from base
  * @param project the project to remove
-*/
+ */
 void Base::removeResearch(ResearchProject * project)
 {
 	_scientists += project->getAssigned();
@@ -1039,7 +1095,7 @@ void Base::removeResearch(ResearchProject * project)
 /**
  * Remove a Production from the Base
  * @param p A pointer to a Production
-*/
+ */
 void Base::removeProduction (Production * p)
 {
 	_engineers += p->getAssignedEngineers();
@@ -1073,7 +1129,7 @@ bool Base::getHyperDetection() const
 		if ((*i)->getRules()->isHyperwave() && (*i)->getBuildTime() == 0)
 		{
 			return true;
-		}		
+		}
 	}
 	return false;
 }
@@ -1115,7 +1171,7 @@ int Base::getUsedPsiLabs() const
 }
 
 /**
- * Returns the total amount of used 
+ * Returns the total amount of used
  * Containment Space in the base.
  * @return Containment Lab space.
  */
@@ -1330,7 +1386,17 @@ void Base::setupDefenses()
 			else // so this vehicle needs ammo
 			{
 				RuleItem *ammo = _mod->getItem(rule->getCompatibleAmmo()->front());
-				int ammoPerVehicle = ammo->getClipSize();
+				int ammoPerVehicle, clipSize;
+				if (ammo->getClipSize() > 0 && rule->getClipSize() > 0)
+				{
+					clipSize = rule->getClipSize();
+					ammoPerVehicle = clipSize / ammo->getClipSize();
+				}
+				else
+				{
+					clipSize = ammo->getClipSize();
+					ammoPerVehicle = clipSize;
+				}
 				int baseQty = _items->getItem(ammo->getType()) / ammoPerVehicle;
 				if (!baseQty)
 				{
@@ -1340,7 +1406,7 @@ void Base::setupDefenses()
 				int canBeAdded = std::min(itemQty, baseQty);
 				for (int j=0; j<canBeAdded; ++j)
 				{
-					_vehicles.push_back(new Vehicle(rule, ammoPerVehicle, size));
+					_vehicles.push_back(new Vehicle(rule, clipSize, size));
 					_items->removeItem(ammo->getType(), ammoPerVehicle);
 				}
 				_items->removeItem(itemId, canBeAdded);
@@ -1667,7 +1733,15 @@ void Base::cleanupDefenses(bool reclaimItems)
 			if (!rule->getCompatibleAmmo()->empty())
 			{
 				RuleItem *ammo = _mod->getItem(rule->getCompatibleAmmo()->front());
-				int ammoPerVehicle = ammo->getClipSize();
+				int ammoPerVehicle;
+				if (ammo->getClipSize() > 0 && rule->getClipSize() > 0)
+				{
+					ammoPerVehicle = rule->getClipSize() / ammo->getClipSize();
+				}
+				else
+				{
+					ammoPerVehicle = ammo->getClipSize();
+				}
 				_items->addItem(ammo->getType(), ammoPerVehicle);
 			}
 		}

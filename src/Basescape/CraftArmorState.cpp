@@ -33,7 +33,6 @@
 #include "SoldierArmorState.h"
 #include "../Savegame/SavedGame.h"
 #include "../Savegame/ItemContainer.h"
-#include "../Mod/Mod.h"
 #include "../Mod/RuleInterface.h"
 
 namespace OpenXcom
@@ -168,15 +167,15 @@ void CraftArmorState::lstSoldiersClick(Action *action)
 			Armor *a = _game->getMod()->getArmor(save->getLastSelectedArmor());
 			if (save->getMonthsPassed() != -1)
 			{
-				if (_base->getItems()->getItem(a->getStoreItem()) > 0 || a->getStoreItem() == "STR_NONE")
+				if (_base->getStorageItems()->getItem(a->getStoreItem()) > 0 || a->getStoreItem() == Armor::NONE)
 				{
-					if (s->getArmor()->getStoreItem() != "STR_NONE")
+					if (s->getArmor()->getStoreItem() != Armor::NONE)
 					{
-						_base->getItems()->addItem(s->getArmor()->getStoreItem());
+						_base->getStorageItems()->addItem(s->getArmor()->getStoreItem());
 					}
-					if (a->getStoreItem() != "STR_NONE")
+					if (a->getStoreItem() != Armor::NONE)
 					{
-						_base->getItems()->removeItem(a->getStoreItem());
+						_base->getStorageItems()->removeItem(a->getStoreItem());
 					}
 
 					s->setArmor(a);

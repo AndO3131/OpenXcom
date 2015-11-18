@@ -43,7 +43,6 @@
 #include "../Battlescape/InventoryState.h"
 #include "../Battlescape/BattlescapeGenerator.h"
 #include "../Savegame/SavedBattleGame.h"
-#include "../Mod/Mod.h"
 #include "../Mod/RuleInterface.h"
 
 namespace OpenXcom
@@ -153,13 +152,13 @@ CraftEquipmentState::CraftEquipmentState(Base *base, size_t craft) : _sel(0), _c
 		}
 		if (rule->getBigSprite() > -1 && rule->getBattleType() != BT_NONE && rule->getBattleType() != BT_CORPSE &&
 			_game->getSavedGame()->isResearched(rule->getRequirements()) &&
-			(_base->getItems()->getItem(*i) > 0 || cQty > 0))
+			(_base->getStorageItems()->getItem(*i) > 0 || cQty > 0))
 		{
 			_items.push_back(*i);
 			std::wostringstream ss, ss2;
 			if (_game->getSavedGame()->getMonthsPassed() > -1)
 			{
-				ss << _base->getItems()->getItem(*i);
+				ss << _base->getStorageItems()->getItem(*i);
 			}
 			else
 			{
@@ -212,8 +211,8 @@ CraftEquipmentState::~CraftEquipmentState()
 }
 
 /**
-* Resets the savegame when coming back from the inventory.
-*/
+ * Resets the savegame when coming back from the inventory.
+ */
 void CraftEquipmentState::init()
 {
 	State::init();
@@ -368,7 +367,7 @@ void CraftEquipmentState::updateQuantity()
 	std::wostringstream ss, ss2;
 	if (_game->getSavedGame()->getMonthsPassed() > -1)
 	{
-		ss << _base->getItems()->getItem(_items[_sel]);
+		ss << _base->getStorageItems()->getItem(_items[_sel]);
 	}
 	else
 	{
@@ -435,7 +434,7 @@ void CraftEquipmentState::moveLeftByValue(int change)
 			{
 				if ((*i)->getRules() == item)
 				{
-					_base->getItems()->addItem(ammo->getType(), (*i)->getAmmo());
+					_base->getStorageItems()->addItem(ammo->getType(), (*i)->getAmmo());
 					delete (*i);
 					i = c->getVehicles()->erase(i);
 				}
@@ -443,7 +442,7 @@ void CraftEquipmentState::moveLeftByValue(int change)
 			}
 			if (_game->getSavedGame()->getMonthsPassed() != -1)
 			{
-				_base->getItems()->addItem(_items[_sel], cQty);
+				_base->getStorageItems()->addItem(_items[_sel], cQty);
 			}
 			// And now reAdd the count we want to keep in the craft (and redistribute the ammo among them)
 			if (cQty > change) moveRightByValue(cQty - change);
@@ -452,7 +451,7 @@ void CraftEquipmentState::moveLeftByValue(int change)
 		{
 			if (_game->getSavedGame()->getMonthsPassed() != -1)
 			{
-				_base->getItems()->addItem(_items[_sel], change);
+				_base->getStorageItems()->addItem(_items[_sel], change);
 			}
 			for (std::vector<Vehicle*>::iterator i = c->getVehicles()->begin(); i != c->getVehicles()->end(); )
 			{
@@ -472,7 +471,7 @@ void CraftEquipmentState::moveLeftByValue(int change)
 		_totalItems -= change;
 		if (_game->getSavedGame()->getMonthsPassed() > -1)
 		{
-			_base->getItems()->addItem(_items[_sel], change);
+			_base->getStorageItems()->addItem(_items[_sel], change);
 		}
 	}
 	updateQuantity();
@@ -496,7 +495,7 @@ void CraftEquipmentState::moveRightByValue(int change)
 {
 	Craft *c = _base->getCrafts()->at(_craft);
 	RuleItem *item = _game->getMod()->getItem(_items[_sel]);
-	int bqty = _base->getItems()->getItem(_items[_sel]);
+	int bqty = _base->getStorageItems()->getItem(_items[_sel]);
 	if (_game->getSavedGame()->getMonthsPassed() == -1)
 	{
 		if (change == INT_MAX)
@@ -525,12 +524,19 @@ void CraftEquipmentState::moveRightByValue(int change)
 			{
 				// And now let's see if we can add the total number of vehicles.
 				RuleItem *ammo = _game->getMod()->getItem(item->getCompatibleAmmo()->front());
-				int ammoPerVehicle = ammo->getClipSize();
-				if (ammoPerVehicle > 0 && item->getClipSize() > 0)
+				int ammoPerVehicle, clipSize;
+				if (ammo->getClipSize() > 0 && item->getClipSize() > 0)
 				{
-					ammoPerVehicle = item->getClipSize() / ammo->getClipSize();
+					clipSize = item->getClipSize();
+					ammoPerVehicle = clipSize / ammo->getClipSize();
 				}
-				int baseQty = _base->getItems()->getItem(ammo->getType()) / ammoPerVehicle;
+				else
+				{
+					clipSize = ammo->getClipSize();
+					ammoPerVehicle = clipSize;
+				}
+
+				int baseQty = _base->getStorageItems()->getItem(ammo->getType()) / ammoPerVehicle;
 				if (_game->getSavedGame()->getMonthsPassed() == -1)
 					baseQty = 1;
 				int canBeAdded = std::min(change, baseQty);
@@ -540,10 +546,10 @@ void CraftEquipmentState::moveRightByValue(int change)
 					{
 						if (_game->getSavedGame()->getMonthsPassed() != -1)
 						{
-							_base->getItems()->removeItem(ammo->getType(), ammoPerVehicle);
-							_base->getItems()->removeItem(_items[_sel]);
+							_base->getStorageItems()->removeItem(ammo->getType(), ammoPerVehicle);
+							_base->getStorageItems()->removeItem(_items[_sel]);
 						}
-						c->getVehicles()->push_back(new Vehicle(item, ammoPerVehicle, size));
+						c->getVehicles()->push_back(new Vehicle(item, clipSize, size));
 					}
 				}
 				else
@@ -560,7 +566,7 @@ void CraftEquipmentState::moveRightByValue(int change)
 					c->getVehicles()->push_back(new Vehicle(item, item->getClipSize(), size));
 					if (_game->getSavedGame()->getMonthsPassed() != -1)
 					{
-						_base->getItems()->removeItem(_items[_sel]);
+						_base->getStorageItems()->removeItem(_items[_sel]);
 					}
 				}
 		}
@@ -578,7 +584,7 @@ void CraftEquipmentState::moveRightByValue(int change)
 		_totalItems += change;
 		if (_game->getSavedGame()->getMonthsPassed() > -1)
 		{
-			_base->getItems()->removeItem(_items[_sel],change);
+			_base->getStorageItems()->removeItem(_items[_sel],change);
 		}
 	}
 	updateQuantity();
@@ -596,10 +602,10 @@ void CraftEquipmentState::btnClearClick(Action *)
 }
 
 /**
-* Displays the inventory screen for the soldiers
-* inside the craft.
-* @param action Pointer to an action.
-*/
+ * Displays the inventory screen for the soldiers
+ * inside the craft.
+ * @param action Pointer to an action.
+ */
 void CraftEquipmentState::btnInventoryClick(Action *)
 {
 	Craft *craft = _base->getCrafts()->at(_craft);

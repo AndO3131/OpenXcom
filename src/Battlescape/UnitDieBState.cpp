@@ -27,7 +27,6 @@
 #include "../Savegame/SavedBattleGame.h"
 #include "../Savegame/Tile.h"
 #include "../Mod/Mod.h"
-#include "../Mod/Mod.h"
 #include "../Engine/Sound.h"
 #include "../Engine/RNG.h"
 #include "../Engine/Options.h"
@@ -310,20 +309,14 @@ void UnitDieBState::convertUnitToCorpse()
  */
 void UnitDieBState::playDeathSound()
 {
-	if (_unit->getDeathSound() == -1)
+	const std::vector<int> &sounds = _unit->getDeathSounds();
+	if (!sounds.empty())
 	{
-		if (_unit->getGender() == GENDER_MALE)
+		int i = sounds[RNG::generate(0, sounds.size() - 1)];
+		if (i >= 0)
 		{
-			_parent->getMod()->getSoundByDepth(_parent->getDepth(), Mod::MALE_SCREAM[RNG::generate(0, 2)])->play(-1, _parent->getMap()->getSoundAngle(_unit->getPosition()));
+			_parent->getMod()->getSoundByDepth(_parent->getDepth(), i)->play(-1, _parent->getMap()->getSoundAngle(_unit->getPosition()));
 		}
-		else
-		{
-			_parent->getMod()->getSoundByDepth(_parent->getDepth(), Mod::FEMALE_SCREAM[RNG::generate(0, 2)])->play(-1, _parent->getMap()->getSoundAngle(_unit->getPosition()));
-		}
-	}
-	else if (_unit->getDeathSound() >= 0)
-	{
-		_parent->getMod()->getSoundByDepth(_parent->getDepth(), _unit->getDeathSound())->play(-1, _parent->getMap()->getSoundAngle(_unit->getPosition()));
 	}
 }
 

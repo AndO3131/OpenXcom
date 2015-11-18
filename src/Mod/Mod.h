@@ -43,7 +43,6 @@ class GMCatFile;
 class Music;
 class Palette;
 class SavedGame;
-class SoldierNamePool;
 class Soldier;
 class RuleCountry;
 class RuleRegion;
@@ -99,8 +98,6 @@ private:
 	std::vector<Uint16> _voxelData;
 	std::vector<std::vector<Uint8> > _transparencyLUTs;
 
-	std::vector<std::string> _soldierNames;
-	std::vector<SoldierNamePool*> _names;
 	std::map<std::string, RuleCountry*> _countries;
 	std::map<std::string, RuleRegion*> _regions;
 	std::map<std::string, RuleBaseFacility*> _facilities;
@@ -133,14 +130,14 @@ private:
 	std::vector<StatString*> _statStrings;
 	std::map<std::string, RuleMusic *> _musicDefs;
 	RuleGlobe *_globe;
-	int _costSoldier, _costEngineer, _costScientist, _timePersonnel, _initialFunding, _turnAIUseGrenade, _turnAIUseBlaster;
+	int _costEngineer, _costScientist, _timePersonnel, _initialFunding, _turnAIUseGrenade, _turnAIUseBlaster;
 	std::pair<std::string, int> _alienFuel;
 	std::string _fontName, _finalResearch;
 	YAML::Node _startingBase;
 	GameTime _startingTime;
 
 	std::vector<std::string> _countriesIndex, _regionsIndex, _facilitiesIndex, _craftsIndex, _craftWeaponsIndex, _itemsIndex, _invsIndex, _ufosIndex;
-	std::vector<std::string> _aliensIndex, _deploymentsIndex, _armorsIndex, _ufopaediaIndex, _researchIndex, _manufactureIndex, _MCDPatchesIndex;
+	std::vector<std::string> _soldiersIndex, _aliensIndex, _deploymentsIndex, _armorsIndex, _ufopaediaIndex, _researchIndex, _manufactureIndex, _MCDPatchesIndex;
 	std::vector<std::string> _alienMissionsIndex, _terrainIndex, _extraSpritesIndex, _extraSoundsIndex, _extraStringsIndex, _missionScriptIndex;
 	std::vector<std::vector<int> > _alienItemLevels;
 	std::vector<SDL_Color> _transparencies;
@@ -189,8 +186,6 @@ public:
 	static int ITEM_RELOAD;
 	static int WALK_OFFSET;
 	static int FLYING_SOUND;
-	static int MALE_SCREAM[3];
-	static int FEMALE_SCREAM[3];
 	static int BUTTON_PRESS;
 	static int WINDOW_POPUP[3];
 	static int UFO_FIRE;
@@ -204,6 +199,9 @@ public:
 	static int BATTLESCAPE_CURSOR;
 	static int UFOPAEDIA_CURSOR;
 	static int GRAPHS_CURSOR;
+	static int DAMAGE_RANGE;
+	static int EXPLOSIVE_DAMAGE_RANGE;
+	static int FIRE_DAMAGE_RANGE;
 	static std::string DEBRIEF_MUSIC_GOOD;
 	static std::string DEBRIEF_MUSIC_BAD;
 	static int DIFFICULTY_COEFFICIENT[5];
@@ -247,8 +245,6 @@ public:
 	void loadAll(const std::vector< std::pair< std::string, std::vector<std::string> > > &mods);
 	/// Generates the starting saved game.
 	SavedGame *newSave() const;
-	/// Gets the pool list for soldier names.
-	const std::vector<SoldierNamePool*> &getPools() const;
 	/// Gets the ruleset for a country type.
 	RuleCountry *getCountry(const std::string &id) const;
 	/// Gets the available countries.
@@ -277,14 +273,16 @@ public:
 	RuleUfo *getUfo(const std::string &id) const;
 	/// Gets the available UFOs.
 	const std::vector<std::string> &getUfosList() const;
-	/// Gets the available terrains.
-	const std::vector<std::string> &getTerrainList() const;
 	/// Gets terrains for battlescape games.
 	RuleTerrain *getTerrain(const std::string &name) const;
+	/// Gets the available terrains.
+	const std::vector<std::string> &getTerrainList() const;
 	/// Gets mapdatafile for battlescape games.
 	MapDataSet *getMapDataSet(const std::string &name);
 	/// Gets soldier unit rules.
 	RuleSoldier *getSoldier(const std::string &name) const;
+	/// Gets the available soldiers.
+	const std::vector<std::string> &getSoldiersList() const;
 	/// Gets generated unit rules.
 	Unit *getUnit(const std::string &name) const;
 	/// Gets alien race rules.
@@ -307,8 +305,6 @@ public:
 	std::map<std::string, RuleInventory*> *getInventories();
 	/// Gets the ruleset for a specific inventory.
 	RuleInventory *getInventory(const std::string &id) const;
-	/// Gets the cost of a soldier.
-	int getSoldierCost() const;
 	/// Gets the cost of an engineer.
 	int getEngineerCost() const;
 	/// Gets the cost of a scientist.
@@ -354,7 +350,7 @@ public:
 	/// Returns the sorted list of inventories.
 	const std::vector<std::string> &getInvsList() const;
 	/// Generates a new soldier.
-	Soldier *genSoldier(SavedGame *save) const;
+	Soldier *genSoldier(SavedGame *save, std::string type = "") const;
 	/// Gets the item to be used as fuel for ships.
 	std::string getAlienFuelName() const;
 	/// Gets the amount of alien fuel to recover

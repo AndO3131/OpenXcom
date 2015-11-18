@@ -46,7 +46,6 @@
 #include "../Mod/RuleRegion.h"
 #include "../Savegame/AlienMission.h"
 #include "DogfightErrorState.h"
-#include "../Mod/Mod.h"
 #include "../Mod/RuleInterface.h"
 
 namespace OpenXcom
@@ -1023,7 +1022,13 @@ void DogfightState::update()
 			AlienMission *mission = _ufo->getMission();
 			mission->ufoShotDown(*_ufo);
 			// Check for retaliation trigger.
-			if (!RNG::percent(4 * (24 - _game->getSavedGame()->getDifficultyCoefficient())))
+			int retaliationOdds = mission->getRules().getRetaliationOdds();
+			if (retaliationOdds == -1)
+			{
+				retaliationOdds = 100 - (4 * (24 - _game->getSavedGame()->getDifficultyCoefficient()));
+			}
+
+			if (RNG::percent(retaliationOdds))
 			{
 				// Spawn retaliation mission.
 				std::string targetRegion;

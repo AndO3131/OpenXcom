@@ -43,7 +43,6 @@
 #include "../Savegame/Tile.h"
 #include "../Savegame/BattleUnit.h"
 #include "../Savegame/BattleItem.h"
-#include "../Mod/Mod.h"
 #include "../Mod/RuleItem.h"
 #include "../Mod/RuleInterface.h"
 #include "../Mod/MapDataSet.h"
@@ -66,7 +65,7 @@
 	    y+ /  \ x+
 		   \  /
 		    \/
-*/
+ */
 
 namespace OpenXcom
 {
