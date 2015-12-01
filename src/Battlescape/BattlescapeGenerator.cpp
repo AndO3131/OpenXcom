@@ -102,6 +102,7 @@ void BattlescapeGenerator::init()
 	_save->initMap(_mapsize_x, _mapsize_y, _mapsize_z);
 	_save->initUtilities(_mod);
 }
+
 /**
  * Sets the XCom craft involved in the battle.
  * @param craft Pointer to XCom craft.
@@ -1070,8 +1071,7 @@ void BattlescapeGenerator::deployAliens(AlienDeployment *deployment)
  */
 BattleUnit *BattlescapeGenerator::addAlien(Unit *rules, int alienRank, bool outside)
 {
-	int difficulty =_game->getSavedGame()->getDifficultyCoefficient();
-	BattleUnit *unit = new BattleUnit(rules, FACTION_HOSTILE, _unitSequence++, _game->getMod()->getArmor(rules->getArmor()), difficulty, _save->getDepth());
+	BattleUnit *unit = new BattleUnit(rules, FACTION_HOSTILE, _unitSequence++, _game->getMod()->getArmor(rules->getArmor()), _game->getMod()->getStatAdjustment(_game->getSavedGame()->getDifficulty()), _save->getDepth());
 	Node *node = 0;
 
 	// safety to avoid index out of bounds errors
@@ -1080,7 +1080,6 @@ BattleUnit *BattlescapeGenerator::addAlien(Unit *rules, int alienRank, bool outs
 	/* following data is the order in which certain alien ranks spawn on certain node ranks */
 	/* note that they all can fall back to rank 0 nodes - which is scout (outside ufo) */
 
-
 	for (int i = 0; i < 7 && node == 0; ++i)
 	{
 		if (outside)
@@ -1088,6 +1087,8 @@ BattleUnit *BattlescapeGenerator::addAlien(Unit *rules, int alienRank, bool outs
 		else
 			node = _save->getSpawnNode(Node::nodeRank[alienRank][i], unit);
 	}
+
+	int difficulty = _game->getSavedGame()->getDifficultyCoefficient();
 
 	if (node && _save->setUnitPosition(unit, node->getPosition()))
 	{
@@ -1102,11 +1103,6 @@ BattleUnit *BattlescapeGenerator::addAlien(Unit *rules, int alienRank, bool outs
 			unit->setDirection(dir);
 		else
 			unit->setDirection(RNG::generate(0,7));
-
-		if (!difficulty)
-		{
-			unit->halveArmor();
-		}
 
 		// we only add a unit if it has a node to spawn on.
 		// (stops them spawning at 0,0,0)
@@ -1449,17 +1445,17 @@ int BattlescapeGenerator::loadMAP(MapBlock *mapblock, int xoff, int yoff, RuleTe
 
 	mapblock->setSizeZ(sizez);
 
-	std::stringstream ss;
+	std::ostringstream ss;
 	if (sizez > _save->getMapSizeZ())
 	{
-		ss <<"Height of map " + filename.str() + " too big for this mission, block is " << sizez << ", expected: " << _save->getMapSizeZ();
+		ss << "Height of map " + filename.str() + " too big for this mission, block is " << sizez << ", expected: " << _save->getMapSizeZ();
 		throw Exception(ss.str());
 	}
 
 	if (sizex != mapblock->getSizeX() ||
 		sizey != mapblock->getSizeY())
 	{
-		ss <<"Map block is not of the size specified " + filename.str() + " is " << sizex << "x" << sizey << " , expected: " << mapblock->getSizeX() << "x" << mapblock->getSizeY();
+		ss << "Map block is not of the size specified " + filename.str() + " is " << sizex << "x" << sizey << " , expected: " << mapblock->getSizeX() << "x" << mapblock->getSizeY();
 		throw Exception(ss.str());
 	}
 
@@ -1928,7 +1924,14 @@ void BattlescapeGenerator::generateMap(const std::vector<MapScript*> *script)
 					break;
 				case MSC_ADDUFO:
 					// as above, note that the craft and the ufo will never be allowed to overlap.
-					// TODO: make _ufopos a vector ;)
+					// significant difference here is that we accept a UFOName string here to choose the UFO map
+					// and we store the UFO positions in a vector, which we iterate later when actually loading the
+					// map and route data. this makes it possible to add multiple UFOs to a single map
+					// IMPORTANTLY: all the UFOs must use _exactly_ the same MCD set.
+					// this is fine for most UFOs but it does mean small scouts can't be combined with larger ones
+					// unless some major alterations are done to the MCD sets and maps themselves beforehand
+					// this is because serializing all the MCDs is an implementational nightmare from my perspective,
+					// and modders can take care of all that manually on their end.
 					if (_game->getMod()->getUfo(command->getUFOName()))
 					{
 						ufoTerrain = _game->getMod()->getUfo(command->getUFOName())->getBattlescapeTerrainData();
@@ -2066,8 +2069,7 @@ void BattlescapeGenerator::generateMap(const std::vector<MapScript*> *script)
 			_save->getMapDataSets()->push_back(*i);
 			craftDataSetIDOffset++;
 		}
-		// TODO: put ufo positions in a vector rather than a single rect, and iterate here?
-		// will probably need to make ufomap a vector too i suppose.
+		
 		for (size_t i = 0; i < ufoMaps.size(); ++i)
 		{
 			loadMAP(ufoMaps[i], _ufoPos[i].x * 10, _ufoPos[i].y * 10, ufoTerrain, mapDataSetIDOffset);

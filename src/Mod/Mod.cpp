@@ -58,7 +58,7 @@
 #include "RuleTerrain.h"
 #include "MapScript.h"
 #include "RuleSoldier.h"
-#include "Unit.h"
+#include "RuleCommendations.h"
 #include "AlienRace.h"
 #include "AlienDeployment.h"
 #include "Armor.h"
@@ -80,6 +80,7 @@
 #include "../Ufopaedia/Ufopaedia.h"
 #include "../Savegame/AlienStrategy.h"
 #include "../Savegame/GameTime.h"
+#include "../Savegame/SoldierDiary.h"
 #include "UfoTrajectory.h"
 #include "RuleAlienMission.h"
 #include "MCDPatch.h"
@@ -118,7 +119,7 @@ int Mod::UFOPAEDIA_CURSOR;
 int Mod::GRAPHS_CURSOR;
 int Mod::DAMAGE_RANGE;
 int Mod::EXPLOSIVE_DAMAGE_RANGE;
-int Mod::FIRE_DAMAGE_RANGE;
+int Mod::FIRE_DAMAGE_RANGE[2];
 std::string Mod::DEBRIEF_MUSIC_GOOD;
 std::string Mod::DEBRIEF_MUSIC_BAD;
 int Mod::DIFFICULTY_COEFFICIENT[5];
@@ -155,7 +156,8 @@ void Mod::resetGlobalStatics()
 	Mod::GRAPHS_CURSOR = 252;
 	Mod::DAMAGE_RANGE = 100;
 	Mod::EXPLOSIVE_DAMAGE_RANGE = 50;
-	Mod::FIRE_DAMAGE_RANGE = 5;
+	Mod::FIRE_DAMAGE_RANGE[0] = 5;
+	Mod::FIRE_DAMAGE_RANGE[1] = 10;
 	Mod::DEBRIEF_MUSIC_GOOD = "GMMARS";
 	Mod::DEBRIEF_MUSIC_BAD = "GMMARS";
 
@@ -190,6 +192,13 @@ Mod::Mod() : _costEngineer(0), _costScientist(0), _timePersonnel(0), _initialFun
 	_muteMusic = new Music();
 	_muteSound = new Sound();
 	_globe = new RuleGlobe();
+	_statAdjustment[0].aimAndArmorMultiplier = 0.5;
+	_statAdjustment[0].growthMultiplier = 0;
+	for (int i = 1; i != 5; ++i)
+	{
+		_statAdjustment[i].aimAndArmorMultiplier = 1.0;
+		_statAdjustment[i].growthMultiplier = i;
+	}
 }
 
 /**
@@ -350,6 +359,10 @@ Mod::~Mod()
 	for (std::vector<StatString*>::const_iterator i = _statStrings.begin(); i != _statStrings.end(); ++i)
 	{
 		delete (*i);
+	}
+	for (std::map<std::string, RuleCommendations *>::const_iterator i = _commendations.begin(); i != _commendations.end(); ++i)
+	{
+		delete i->second;
 	}
 }
 
@@ -909,6 +922,11 @@ void Mod::loadFile(const std::string &filename)
 			}
 			_ufopaediaListOrder += 100;
 			rule->load(*i, _ufopaediaListOrder);
+			if (rule->section != UFOPAEDIA_NOT_AVAILABLE &&
+				std::find(_ufopaediaCatIndex.begin(), _ufopaediaCatIndex.end(), rule->section) == _ufopaediaCatIndex.end())
+			{
+				_ufopaediaCatIndex.push_back(rule->section);
+			}
 		}
 		else if ((*i)["delete"])
 		{
@@ -952,6 +970,7 @@ void Mod::loadFile(const std::string &filename)
 		for (YAML::const_iterator i = doc["difficultyCoefficient"].begin(); i != doc["difficultyCoefficient"].end() && num < 5; ++i)
 		{
 			DIFFICULTY_COEFFICIENT[num] = (*i).as<int>(DIFFICULTY_COEFFICIENT[num]);
+			_statAdjustment[num].growthMultiplier = DIFFICULTY_COEFFICIENT[num];
 			++num;
 		}
 	}
@@ -1087,7 +1106,12 @@ void Mod::loadFile(const std::string &filename)
 		Mod::GRAPHS_CURSOR = (*i)["graphsCursor"].as<int>(Mod::GRAPHS_CURSOR);
 		Mod::DAMAGE_RANGE = (*i)["damageRange"].as<int>(Mod::DAMAGE_RANGE);
 		Mod::EXPLOSIVE_DAMAGE_RANGE = (*i)["explosiveDamageRange"].as<int>(Mod::EXPLOSIVE_DAMAGE_RANGE);
-		Mod::FIRE_DAMAGE_RANGE = (*i)["fireDamageRange"].as<int>(Mod::FIRE_DAMAGE_RANGE);
+		size_t num = 0;
+		for (YAML::const_iterator j = (*i)["fireDamageRange"].begin(); j != (*i)["fireDamageRange"].end() && num < 2; ++j)
+		{
+			FIRE_DAMAGE_RANGE[num] = (*j).as<int>(FIRE_DAMAGE_RANGE[num]);
+			++num;
+		}
 		Mod::DEBRIEF_MUSIC_GOOD = (*i)["goodDebriefingMusic"].as<std::string>(Mod::DEBRIEF_MUSIC_GOOD);
 		Mod::DEBRIEF_MUSIC_BAD = (*i)["badDebriefingMusic"].as<std::string>(Mod::DEBRIEF_MUSIC_BAD);
 	}
@@ -1159,6 +1183,27 @@ void Mod::loadFile(const std::string &filename)
 		if (rule != 0)
 		{
 			rule->load(*i);
+		}
+	}
+	for (YAML::const_iterator i = doc["commendations"].begin(); i != doc["commendations"].end(); ++i)
+	{
+		std::string type = (*i)["type"].as<std::string>();
+		std::auto_ptr<RuleCommendations> commendations(new RuleCommendations());
+		commendations->load(*i);
+        _commendations[type] = commendations.release();
+	}
+	size_t count = 0;
+	for (YAML::const_iterator i = doc["aimAndArmorMultipliers"].begin(); i != doc["aimAndArmorMultipliers"].end() && count < 5; ++i)
+	{
+		_statAdjustment[count].aimAndArmorMultiplier = (*i).as<double>(_statAdjustment[count].aimAndArmorMultiplier);
+		++count;
+	}
+	if (doc["statGrowthMultipliers"])
+	{
+		_statAdjustment[0].statGrowth = doc["statGrowthMultipliers"].as<UnitStats>(_statAdjustment[0].statGrowth);
+		for (size_t i = 1; i != 5; ++i)
+		{
+			_statAdjustment[i].statGrowth = _statAdjustment[0].statGrowth;
 		}
 	}
 }
@@ -1266,6 +1311,12 @@ SavedGame *Mod::newSave() const
 		Soldier *soldier = genSoldier(save);
 		soldier->setCraft(base->getCrafts()->front());
 		base->getSoldiers()->push_back(soldier);
+		// Award soldier a special 'original eigth' commendation
+		soldier->getDiary()->awardOriginalEightCommendation();
+		for (std::vector<SoldierCommendations*>::iterator comm = soldier->getDiary()->getSoldierCommendations()->begin(); comm != soldier->getDiary()->getSoldierCommendations()->end(); ++comm)
+		{
+			(*comm)->makeOld();
+		}
 	}
 
 	save->getBases()->push_back(base);
@@ -1488,6 +1539,15 @@ const std::vector<std::string> &Mod::getSoldiersList() const
 }
 
 /**
+ * Gets the list of commendations
+ * @return The list of commendations.
+ */
+std::map<std::string, RuleCommendations *> Mod::getCommendation() const
+{
+	return _commendations;
+}
+
+/**
  * Returns the info about a specific unit.
  * @param name Unit name.
  * @return Rules for the units.
@@ -1610,6 +1670,16 @@ ArticleDefinition *Mod::getUfopaediaArticle(const std::string &name) const
 const std::vector<std::string> &Mod::getUfopaediaList() const
 {
 	return _ufopaediaIndex;
+}
+
+/**
+* Returns the list of all article categories
+* provided by the mod.
+* @return List of categories.
+*/
+const std::vector<std::string> &Mod::getUfopaediaCategoryList() const
+{
+	return _ufopaediaCatIndex;
 }
 
 /**
@@ -1818,6 +1888,7 @@ std::vector<std::pair<std::string, ExtraSounds *> > Mod::getExtraSounds() const
 {
 	return _extraSounds;
 }
+
 /**
  * Gets the list of external strings.
  * @return The list of external strings.
@@ -1919,16 +1990,13 @@ struct compareRule<ArticleDefinition> : public std::binary_function<const std::s
 
 	compareRule(Mod *mod) : _mod(mod)
 	{
-		_sections[UFOPAEDIA_XCOM_CRAFT_ARMAMENT] = 0;
-		_sections[UFOPAEDIA_HEAVY_WEAPONS_PLATFORMS] = 1;
-		_sections[UFOPAEDIA_WEAPONS_AND_EQUIPMENT] = 2;
-		_sections[UFOPAEDIA_ALIEN_ARTIFACTS] = 3;
-		_sections[UFOPAEDIA_BASE_FACILITIES] = 4;
-		_sections[UFOPAEDIA_ALIEN_LIFE_FORMS] = 5;
-		_sections[UFOPAEDIA_ALIEN_RESEARCH] = 6;
-		_sections[UFOPAEDIA_UFO_COMPONENTS] = 7;
-		_sections[UFOPAEDIA_UFOS] = 8;
-		_sections[UFOPAEDIA_NOT_AVAILABLE] = 9;
+		const std::vector<std::string> &list = mod->getUfopaediaCategoryList();
+		int order = 0;
+		for (std::vector<std::string>::const_iterator i = list.begin(); i != list.end(); ++i)
+		{
+			_sections[*i] = order++;
+		}
+		_sections[UFOPAEDIA_NOT_AVAILABLE] = order++;
 	}
 
 	bool operator()(const std::string &r1, const std::string &r2) const
@@ -3267,6 +3335,15 @@ void Mod::createTransparencyLUT(Palette *pal)
 		}
 	}
 	_transparencyLUTs.push_back(lookUpTable);
+}
+
+StatAdjustment *Mod::getStatAdjustment(int difficulty)
+{
+	if (difficulty >= 4)
+	{
+		return &_statAdjustment[4];
+	}
+	return &_statAdjustment[difficulty];
 }
 
 }

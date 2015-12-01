@@ -94,6 +94,12 @@ openxcom_SOURCES = \
 	src/Basescape/SellState.h \
 	src/Basescape/SoldierArmorState.cpp \
 	src/Basescape/SoldierArmorState.h \
+	src/Basescape/SoldierDiaryMissionState.cpp \
+	src/Basescape/SoldierDiaryMissionState.h \
+	src/Basescape/SoldierDiaryOverviewState.cpp \
+	src/Basescape/SoldierDiaryOverviewState.h \
+	src/Basescape/SoldierDiaryPerformanceState.cpp \
+	src/Basescape/SoldierDiaryPerformanceState.h \
 	src/Basescape/SoldierInfoState.cpp \
 	src/Basescape/SoldierInfoState.h \
 	src/Basescape/SoldierMemorialState.cpp \
@@ -140,6 +146,10 @@ openxcom_SOURCES = \
 	src/Battlescape/CannotReequipState.h \
 	src/Battlescape/CivilianBAIState.cpp \
 	src/Battlescape/CivilianBAIState.h \
+	src/Battlescape/CommendationLateState.cpp \
+	src/Battlescape/CommendationLateState.h \
+	src/Battlescape/CommendationState.cpp \
+	src/Battlescape/CommendationState.h \
 	src/Battlescape/DebriefingState.cpp \
 	src/Battlescape/DebriefingState.h \
 	src/Battlescape/Explosion.cpp \
@@ -324,10 +334,10 @@ openxcom_SOURCES = \
 	src/Geoscape/CraftErrorState.h \
 	src/Geoscape/CraftPatrolState.cpp \
 	src/Geoscape/CraftPatrolState.h \
-	src/Geoscape/DogfightState.cpp \
-	src/Geoscape/DogfightState.h \
 	src/Geoscape/DogfightErrorState.cpp \
 	src/Geoscape/DogfightErrorState.h \
+	src/Geoscape/DogfightState.cpp \
+	src/Geoscape/DogfightState.h \
 	src/Geoscape/FundingState.cpp \
 	src/Geoscape/FundingState.h \
 	src/Geoscape/GeoscapeCraftState.cpp \
@@ -490,6 +500,8 @@ openxcom_SOURCES = \
 	src/Mod/MapDataSet.h \
 	src/Mod/MapScript.cpp \
 	src/Mod/MapScript.h \
+	src/Mod/Mod.cpp \
+	src/Mod/Mod.h \
 	src/Mod/Polygon.cpp \
 	src/Mod/Polygon.h \
 	src/Mod/Polyline.cpp \
@@ -498,6 +510,8 @@ openxcom_SOURCES = \
 	src/Mod/RuleAlienMission.h \
 	src/Mod/RuleBaseFacility.cpp \
 	src/Mod/RuleBaseFacility.h \
+	src/Mod/RuleCommendations.cpp \
+	src/Mod/RuleCommendations.h \
 	src/Mod/RuleCountry.cpp \
 	src/Mod/RuleCountry.h \
 	src/Mod/RuleCraft.cpp \
@@ -530,8 +544,6 @@ openxcom_SOURCES = \
 	src/Mod/RuleUfo.h \
 	src/Mod/RuleVideo.cpp \
 	src/Mod/RuleVideo.h \
-	src/Mod/Mod.cpp \
-	src/Mod/Mod.h \
 	src/Mod/SoldierNamePool.cpp \
 	src/Mod/SoldierNamePool.h \
 	src/Mod/SoundDefinition.cpp \
@@ -560,11 +572,11 @@ openxcom_SOURCES = \
 	src/Savegame/BattleItem.h \
 	src/Savegame/BattleUnit.cpp \
 	src/Savegame/BattleUnit.h \
+	src/Savegame/BattleUnitStatistics.h \
 	src/Savegame/Country.cpp \
 	src/Savegame/Country.h \
 	src/Savegame/Craft.cpp \
 	src/Savegame/Craft.h \
-	src/Savegame/CraftId.h \
 	src/Savegame/CraftWeapon.cpp \
 	src/Savegame/CraftWeapon.h \
 	src/Savegame/CraftWeaponProjectile.cpp \
@@ -577,6 +589,7 @@ openxcom_SOURCES = \
 	src/Savegame/ItemContainer.h \
 	src/Savegame/MissionSite.cpp \
 	src/Savegame/MissionSite.h \
+	src/Savegame/MissionStatistics.h \
 	src/Savegame/MovingTarget.cpp \
 	src/Savegame/MovingTarget.h \
 	src/Savegame/Node.cpp \
@@ -600,6 +613,8 @@ openxcom_SOURCES = \
 	src/Savegame/Soldier.h \
 	src/Savegame/SoldierDeath.cpp \
 	src/Savegame/SoldierDeath.h \
+	src/Savegame/SoldierDiary.cpp \
+	src/Savegame/SoldierDiary.h \
 	src/Savegame/Target.cpp \
 	src/Savegame/Target.h \
 	src/Savegame/Tile.cpp \

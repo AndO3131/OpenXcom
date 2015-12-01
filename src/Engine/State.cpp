@@ -104,10 +104,6 @@ void State::setInterface(const std::string& category, bool alterPal, SavedBattle
 				backPal = color;
 			}
 		}
-		if (!_ruleInterface->getMusic().empty())
-		{
-			_game->getMod()->playMusic(_ruleInterface->getMusic());
-		}
 	}
 	if (battleGame)
 	{
@@ -211,6 +207,7 @@ void State::add(Surface *surface, const std::string &id, const std::string &cate
 
 	_surfaces.push_back(surface);
 }
+
 /**
  * Returns whether this is a full-screen state.
  * This is used to optimize the state machine since full-screen
@@ -254,6 +251,10 @@ void State::init()
 	if (_game->getMod() != 0)
 	{
 		_game->getMod()->setPalette(_palette);
+	}
+	if (_ruleInterface != 0 && !_ruleInterface->getMusic().empty())
+	{
+		_game->getMod()->playMusic(_ruleInterface->getMusic());
 	}
 }
 

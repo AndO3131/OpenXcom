@@ -26,6 +26,7 @@
 #include <yaml-cpp/yaml.h>
 #include "../Engine/Options.h"
 #include "../Savegame/GameTime.h"
+#include "Unit.h"
 #include "RuleAlienMission.h"
 
 namespace OpenXcom
@@ -69,6 +70,7 @@ class MCDPatch;
 class ExtraSprites;
 class ExtraSounds;
 class ExtraStrings;
+class RuleCommendations;
 class StatString;
 class RuleInterface;
 class RuleGlobe;
@@ -77,6 +79,7 @@ class MapScript;
 class RuleVideo;
 class RuleMusic;
 class RuleMissionScript;
+struct StatAdjustment;
 
 /**
  * Contains all the game-specific static data that never changes
@@ -123,6 +126,7 @@ private:
 	std::map<std::string, RuleVideo *>_videos;
 	std::map<std::string, MCDPatch *> _MCDPatches;
 	std::map<std::string, std::vector<MapScript *> > _mapScripts;
+	std::map<std::string, RuleCommendations *> _commendations;
 	std::map<std::string, RuleMissionScript*> _missionScripts;
 	std::vector<std::pair<std::string, ExtraSprites *> > _extraSprites;
 	std::vector<std::pair<std::string, ExtraSounds *> > _extraSounds;
@@ -135,9 +139,10 @@ private:
 	std::string _fontName, _finalResearch;
 	YAML::Node _startingBase;
 	GameTime _startingTime;
+	StatAdjustment _statAdjustment[5];
 
 	std::vector<std::string> _countriesIndex, _regionsIndex, _facilitiesIndex, _craftsIndex, _craftWeaponsIndex, _itemsIndex, _invsIndex, _ufosIndex;
-	std::vector<std::string> _soldiersIndex, _aliensIndex, _deploymentsIndex, _armorsIndex, _ufopaediaIndex, _researchIndex, _manufactureIndex, _MCDPatchesIndex;
+	std::vector<std::string> _soldiersIndex, _aliensIndex, _deploymentsIndex, _armorsIndex, _ufopaediaIndex, _ufopaediaCatIndex, _researchIndex, _manufactureIndex, _MCDPatchesIndex;
 	std::vector<std::string> _alienMissionsIndex, _terrainIndex, _extraSpritesIndex, _extraSoundsIndex, _extraStringsIndex, _missionScriptIndex;
 	std::vector<std::vector<int> > _alienItemLevels;
 	std::vector<SDL_Color> _transparencies;
@@ -201,7 +206,7 @@ public:
 	static int GRAPHS_CURSOR;
 	static int DAMAGE_RANGE;
 	static int EXPLOSIVE_DAMAGE_RANGE;
-	static int FIRE_DAMAGE_RANGE;
+	static int FIRE_DAMAGE_RANGE[2];
 	static std::string DEBRIEF_MUSIC_GOOD;
 	static std::string DEBRIEF_MUSIC_BAD;
 	static int DIFFICULTY_COEFFICIENT[5];
@@ -283,6 +288,8 @@ public:
 	RuleSoldier *getSoldier(const std::string &name) const;
 	/// Gets the available soldiers.
 	const std::vector<std::string> &getSoldiersList() const;
+	/// Gets commendation rules.
+	std::map<std::string, RuleCommendations *> getCommendation() const;
 	/// Gets generated unit rules.
 	Unit *getUnit(const std::string &name) const;
 	/// Gets alien race rules.
@@ -301,6 +308,8 @@ public:
 	ArticleDefinition *getUfopaediaArticle(const std::string &name) const;
 	/// Gets the available articles.
 	const std::vector<std::string> &getUfopaediaList() const;
+	/// Gets the available article categories.
+	const std::vector<std::string> &getUfopaediaCategoryList() const;
 	/// Gets the inventory list.
 	std::map<std::string, RuleInventory*> *getInventories();
 	/// Gets the ruleset for a specific inventory.
@@ -378,6 +387,7 @@ public:
 	const std::vector<std::string> *getMissionScriptList() const;
 	RuleMissionScript *getMissionScript(const std::string &name) const;
 	std::string getFinalResearch() const;
+	StatAdjustment *getStatAdjustment(int difficulty);
 };
 
 }

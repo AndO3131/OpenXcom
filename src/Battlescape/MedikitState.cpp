@@ -33,6 +33,7 @@
 #include "../Engine/Options.h"
 #include "../Savegame/SavedGame.h"
 #include "../Savegame/SavedBattleGame.h"
+#include "../Savegame/BattleUnitStatistics.h"
 
 namespace OpenXcom
 {
@@ -230,7 +231,9 @@ void MedikitState::onHealClick(Action *)
 		if (_targetUnit->getStatus() == STATUS_UNCONSCIOUS && _targetUnit->getStunlevel() < _targetUnit->getHealth() && _targetUnit->getHealth() > 0)
 		{
 			_targetUnit->setTimeUnits(0);
+			_action->actor->getStatistics()->revivedSoldier++;
 		}
+		_unit->getStatistics()->woundsHealed++;
 	}
 	else
 	{
@@ -255,6 +258,7 @@ void MedikitState::onStimulantClick(Action *)
 	{
 		_targetUnit->stimulant(rule->getEnergyRecovery(), rule->getStunRecovery());
 		_item->setStimulantQuantity(--stimulant);
+		_action->actor->getStatistics()->appliedStimulant++;
 		update();
 
 		// if the unit has revived we quit this screen automatically
@@ -287,6 +291,7 @@ void MedikitState::onPainKillerClick(Action *)
 	{
 		_targetUnit->painKillers();
 		_item->setPainKillerQuantity(--pk);
+		_action->actor->getStatistics()->appliedPainKill++;
 		update();
 	}
 	else

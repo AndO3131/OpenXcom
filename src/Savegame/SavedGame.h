@@ -1,20 +1,20 @@
 /*
- *Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2015 OpenXcom Developers.
  *
- *This file is part of OpenXcom.
+ * This file is part of OpenXcom.
  *
- *OpenXcom is free software: you can redistribute it and/or modify
- *it under the terms of the GNU General Public License as published by
- *the Free Software Foundation, either version 3 of the License, or
- *(at your option) any later version.
+ * OpenXcom is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *OpenXcom is distributed in the hope that it will be useful,
- *but WITHOUT ANY WARRANTY; without even the implied warranty of
- *MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *GNU General Public License for more details.
+ * OpenXcom is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *You should have received a copy of the GNU General Public License
- *along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef OPENXCOM_SAVEDGAME_H
 #define OPENXCOM_SAVEDGAME_H
@@ -24,8 +24,9 @@
 #include <string>
 #include <time.h>
 #include <stdint.h>
-#include "CraftId.h"
+#include "GameTime.h"
 #include "../Mod/RuleAlienMission.h"
+#include "../Savegame/Craft.h"
 
 namespace OpenXcom
 {
@@ -51,14 +52,16 @@ class AlienMission;
 class Target;
 class Soldier;
 class Craft;
+struct MissionStatistics;
+struct BattleUnitKills;
 
 /**
  *Enumerator containing all the possible game difficulties.
  */
 enum GameDifficulty { DIFF_BEGINNER = 0, DIFF_EXPERIENCED, DIFF_VETERAN, DIFF_GENIUS, DIFF_SUPERHUMAN };
 
-/**
- *Enumerator for the various save types.
+ /**
+ * Enumerator for the various save types.
  */
 enum SaveType { SAVE_DEFAULT, SAVE_QUICK, SAVE_AUTO_GEOSCAPE, SAVE_AUTO_BATTLESCAPE, SAVE_IRONMAN, SAVE_IRONMAN_END };
 
@@ -84,6 +87,7 @@ struct PromotionInfo
 	int totalSergeants;
 	PromotionInfo(): totalCommanders(0), totalColonels(0), totalCaptains(0), totalSergeants(0){}
 };
+
 /**
  *The game data that gets written to disk when the game is saved.
  *A saved game holds all the variable info in a game like funds,
@@ -121,12 +125,12 @@ private:
 	std::vector<Soldier*> _deadSoldiers;
 	size_t _selectedBase;
 	std::string _lastselectedArmor; //contains the last selected armour
+    std::vector<MissionStatistics*> _missionStatistics;
 
 	void getDependableResearchBasic (std::vector<RuleResearch*> & dependables, const RuleResearch *research, const Mod *mod, Base *base) const;
 	static SaveInfo getSaveInfo(const std::string &file, Language *lang);
 public:
 	static const std::string AUTOSAVE_GEOSCAPE, AUTOSAVE_BATTLESCAPE, QUICKSAVE;
-
 	/// Creates a new saved game.
 	SavedGame();
 	/// Cleans up the saved game.
@@ -284,7 +288,7 @@ public:
 	void removePoppedResearch(const RuleResearch* research);
 	/// Gets the list of dead soldiers.
 	std::vector<Soldier*> *getDeadSoldiers();
-	/// Gets the last selected player base.
+    /// Gets the last selected player base.
 	Base *getSelectedBase();
 	/// Set the last selected player base.
 	void setSelectedBase(size_t base);
@@ -293,11 +297,13 @@ public:
 	/// Sets the last selected armour
 	void setLastSelectedArmor(const std::string &value);
 	/// Gets the last selected armour
-	std::string getLastSelectedArmor();
+	std::string getLastSelectedArmor() const;
 	/// Returns the craft corresponding to the specified unique id.
 	Craft *findCraftByUniqueId(const CraftId& craftId) const;
+    /// Gets the list of missions statistics
+	std::vector<MissionStatistics*> *getMissionStatistics();
+	/// Handles a soldier's death.
+	std::vector<Soldier*>::iterator killSoldier(Soldier *soldier, BattleUnitKills *cause = 0);
 };
-
 }
-
 #endif
