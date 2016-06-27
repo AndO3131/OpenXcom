@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_POSITION_H
-#define OPENXCOM_POSITION_H
-
 #include <yaml-cpp/yaml.h>
 
 namespace OpenXcom
@@ -55,15 +53,15 @@ public:
 	Position operator/(const Position& pos) const { return Position(x / pos.x, y / pos.y, z / pos.z); }
 	Position& operator/=(const Position& pos) { x/=pos.x; y/=pos.y; z/=pos.z; return *this; }
 
-    Position operator/(const int v) const { return Position(x / v, y / v, z / v); }
+	Position operator/(const int v) const { return Position(x / v, y / v, z / v); }
 
 	/// == operator
-    bool operator== (const Position& pos) const
+	bool operator== (const Position& pos) const
 	{
 		return x == pos.x && y == pos.y && z == pos.z;
 	}
 	/// != operator
-    bool operator!= (const Position& pos) const
+	bool operator!= (const Position& pos) const
 	{
 		return x != pos.x || y != pos.y || z != pos.z;
 	}
@@ -72,15 +70,15 @@ public:
 
 inline std::ostream& operator<<(std::ostream& out, const Position& pos)
 {
-    out << "(" << pos.x << "," << pos.y << ","<< pos.z << ")";
-    return out;
+	out << "(" << pos.x << "," << pos.y << ","<< pos.z << ")";
+	return out;
 }
 
 
 inline std::wostream& operator<<(std::wostream& wout, const Position& pos)
 {
-    wout << "(" << pos.x << "," << pos.y << ","<< pos.z << ")";
-    return wout;
+	wout << "(" << pos.x << "," << pos.y << ","<< pos.z << ")";
+	return wout;
 }
 
 typedef Position Vector3i;
@@ -113,6 +111,3 @@ namespace YAML
 		}
 	};
 }
-
-
-#endif

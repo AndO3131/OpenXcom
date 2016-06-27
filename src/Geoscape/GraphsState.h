@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_GRAPHSSTATE_H
-#define OPENXCOM_GRAPHSSTATE_H
-
 #include "../Engine/State.h"
 
 namespace OpenXcom
@@ -91,7 +89,7 @@ public:
 	void shiftButtons(Action *action);
 	/// Reset all the elements on screen.
 	void resetScreen();
-	/// Update the scale 
+	/// Update the scale
 	void updateScale(double lowerLimit, double upperLimit);
 	/// Decide which lines to draw
 	void drawLines();
@@ -105,5 +103,3 @@ public:
 };
 
 }
-
-#endif

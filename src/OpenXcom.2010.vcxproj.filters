@@ -275,9 +275,6 @@
     <ClCompile Include="Battlescape\UnitSprite.cpp">
       <Filter>Battlescape</Filter>
     </ClCompile>
-    <ClCompile Include="Battlescape\Position.cpp">
-      <Filter>Battlescape</Filter>
-    </ClCompile>
     <ClCompile Include="Interface\NumberText.cpp">
       <Filter>Interface</Filter>
     </ClCompile>
@@ -298,9 +295,6 @@
     </ClCompile>
     <ClCompile Include="Battlescape\BattlescapeGenerator.cpp">
       <Filter>Battlescape</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Exception.cpp">
-      <Filter>Engine</Filter>
     </ClCompile>
     <ClCompile Include="Savegame\ItemContainer.cpp">
       <Filter>Savegame</Filter>
@@ -420,9 +414,6 @@
       <Filter>Battlescape</Filter>
     </ClCompile>
     <ClCompile Include="Battlescape\Inventory.cpp">
-      <Filter>Battlescape</Filter>
-    </ClCompile>
-    <ClCompile Include="Battlescape\BattleAIState.cpp">
       <Filter>Battlescape</Filter>
     </ClCompile>
     <ClCompile Include="Battlescape\WarningMessage.cpp">
@@ -564,9 +555,6 @@
     <ClCompile Include="Geoscape\PsiTrainingState.cpp">
       <Filter>Geoscape</Filter>
     </ClCompile>
-    <ClCompile Include="Battlescape\NoContainmentState.cpp">
-      <Filter>Battlescape</Filter>
-    </ClCompile>
     <ClCompile Include="Savegame\WeightedOptions.cpp">
       <Filter>Savegame</Filter>
     </ClCompile>
@@ -645,12 +633,6 @@
     </ClCompile>
     <ClCompile Include="Engine\LanguagePlurality.cpp">
       <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Battlescape\AlienBAIState.cpp">
-      <Filter>Battlescape</Filter>
-    </ClCompile>
-    <ClCompile Include="Battlescape\CivilianBAIState.cpp">
-      <Filter>Battlescape</Filter>
     </ClCompile>
     <ClCompile Include="Menu\PauseState.cpp">
       <Filter>Menu</Filter>
@@ -945,6 +927,18 @@
     </ClCompile>
     <ClCompile Include="Basescape\SoldierDiaryPerformanceState.cpp">
       <Filter>Basescape</Filter>
+    </ClCompile>
+    <ClCompile Include="Mod\RuleConverter.cpp">
+      <Filter>Mod</Filter>
+    </ClCompile>
+    <ClCompile Include="Menu\StatisticsState.cpp">
+      <Filter>Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="Battlescape\AIModule.cpp">
+      <Filter>Battlescape</Filter>
+    </ClCompile>
+    <ClCompile Include="Menu\SetWindowedRootState.cpp">
+      <Filter>Menu</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1376,9 +1370,6 @@
     <ClInclude Include="Battlescape\Inventory.h">
       <Filter>Battlescape</Filter>
     </ClInclude>
-    <ClInclude Include="Battlescape\BattleAIState.h">
-      <Filter>Battlescape</Filter>
-    </ClInclude>
     <ClInclude Include="Battlescape\WarningMessage.h">
       <Filter>Battlescape</Filter>
     </ClInclude>
@@ -1515,9 +1506,6 @@
     <ClInclude Include="Geoscape\PsiTrainingState.h">
       <Filter>Geoscape</Filter>
     </ClInclude>
-    <ClInclude Include="Battlescape\NoContainmentState.h">
-      <Filter>Battlescape</Filter>
-    </ClInclude>
     <ClInclude Include="Savegame\WeightedOptions.h">
       <Filter>Savegame</Filter>
     </ClInclude>
@@ -1606,12 +1594,6 @@
     </ClInclude>
     <ClInclude Include="Engine\LanguagePlurality.h">
       <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Battlescape\AlienBAIState.h">
-      <Filter>Battlescape</Filter>
-    </ClInclude>
-    <ClInclude Include="Battlescape\CivilianBAIState.h">
-      <Filter>Battlescape</Filter>
     </ClInclude>
     <ClInclude Include="Menu\PauseState.h">
       <Filter>Menu</Filter>
@@ -1754,9 +1736,6 @@
     </ClInclude>
     <ClInclude Include="Menu\ListLoadOriginalState.h">
       <Filter>Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="Savegame\SaveConverterXcom1.h">
-      <Filter>Savegame</Filter>
     </ClInclude>
     <ClInclude Include="Engine\FlcPlayer.h">
       <Filter>Engine</Filter>
@@ -1928,6 +1907,18 @@
     </ClInclude>
     <ClInclude Include="Basescape\SoldierDiaryPerformanceState.h">
       <Filter>Basescape</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\RuleConverter.h">
+      <Filter>Mod</Filter>
+    </ClInclude>
+    <ClInclude Include="Menu\StatisticsState.h">
+      <Filter>Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="Battlescape\AIModule.h">
+      <Filter>Battlescape</Filter>
+    </ClInclude>
+    <ClInclude Include="Menu\SetWindowedRootState.h">
+      <Filter>Menu</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

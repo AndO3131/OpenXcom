@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,10 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#define _USE_MATH_DEFINES
 #include "Base.h"
 #include "../fmath.h"
-#include <cmath>
 #include <stack>
 #include <algorithm>
 #include "BaseFacility.h"
@@ -45,6 +43,7 @@
 #include "../Engine/RNG.h"
 #include "../Engine/Options.h"
 #include "../Mod/RuleSoldier.h"
+#include "../Engine/Logger.h"
 
 namespace OpenXcom
 {
@@ -107,7 +106,6 @@ Base::~Base()
 void Base::load(const YAML::Node &node, SavedGame *save, bool newGame, bool newBattleGame)
 {
 	Target::load(node);
-	_name = Language::utf8ToWstr(node["name"].as<std::string>(""));
 
 	if (!newGame || !Options::customInitialBase || newBattleGame)
 	{
@@ -120,6 +118,10 @@ void Base::load(const YAML::Node &node, SavedGame *save, bool newGame, bool newB
 				f->load(*i);
 				_facilities.push_back(f);
 			}
+			else
+			{
+				Log(LOG_ERROR) << "Failed to load facility " << type;
+			}
 		}
 	}
 
@@ -131,6 +133,10 @@ void Base::load(const YAML::Node &node, SavedGame *save, bool newGame, bool newB
 			Craft *c = new Craft(_mod->getCraft(type), this);
 			c->load(*i, _mod, save);
 			_crafts.push_back(c);
+		}
+		else
+		{
+			Log(LOG_ERROR) << "Failed to load craft " << type;
 		}
 	}
 
@@ -156,14 +162,19 @@ void Base::load(const YAML::Node &node, SavedGame *save, bool newGame, bool newB
 			}
 			_soldiers.push_back(s);
 		}
+		else
+		{
+			Log(LOG_ERROR) << "Failed to load soldier " << type;
+		}
 	}
 
 	_items->load(node["items"]);
 	// Some old saves have bad items, better get rid of them to avoid further bugs
 	for (std::map<std::string, int>::iterator i = _items->getContents()->begin(); i != _items->getContents()->end();)
 	{
-		if (std::find(_mod->getItemsList().begin(), _mod->getItemsList().end(), i->first) == _mod->getItemsList().end())
+		if (_mod->getItem(i->first) == 0)
 		{
+			Log(LOG_ERROR) << "Failed to load item " << i->first;
 			_items->getContents()->erase(i++);
 		}
 		else
@@ -198,6 +209,7 @@ void Base::load(const YAML::Node &node, SavedGame *save, bool newGame, bool newB
 		else
 		{
 			_scientists += (*i)["assigned"].as<int>(0);
+			Log(LOG_ERROR) << "Failed to load research " << research;
 		}
 	}
 
@@ -213,6 +225,7 @@ void Base::load(const YAML::Node &node, SavedGame *save, bool newGame, bool newB
 		else
 		{
 			_engineers += (*i)["assigned"].as<int>(0);
+			Log(LOG_ERROR) << "Failed to load manufacture " << item;
 		}
 	}
 
@@ -226,7 +239,6 @@ void Base::load(const YAML::Node &node, SavedGame *save, bool newGame, bool newB
 YAML::Node Base::save() const
 {
 	YAML::Node node = Target::save();
-	node["name"] = Language::wstrToUtf8(_name);
 	for (std::vector<BaseFacility*>::const_iterator i = _facilities.begin(); i != _facilities.end(); ++i)
 	{
 		node["facilities"].push_back((*i)->save());
@@ -242,7 +254,8 @@ YAML::Node Base::save() const
 	node["items"] = _items->save();
 	node["scientists"] = _scientists;
 	node["engineers"] = _engineers;
-	node["inBattlescape"] = _inBattlescape;
+	if (_inBattlescape)
+		node["inBattlescape"] = _inBattlescape;
 	for (std::vector<Transfer*>::const_iterator i = _transfers.begin(); i != _transfers.end(); ++i)
 	{
 		node["transfers"].push_back((*i)->save());
@@ -255,7 +268,8 @@ YAML::Node Base::save() const
 	{
 		node["productions"].push_back((*i)->save());
 	}
-	node["retaliationTarget"] = _retaliationTarget;
+	if (_retaliationTarget)
+		node["retaliationTarget"] = _retaliationTarget;
 	return node;
 }
 
@@ -279,15 +293,6 @@ YAML::Node Base::saveId() const
 std::wstring Base::getName(Language *) const
 {
 	return _name;
-}
-
-/**
- * Changes the custom name for the base.
- * @param name Name.
- */
-void Base::setName(const std::wstring &name)
-{
-	_name = name;
 }
 
 /**

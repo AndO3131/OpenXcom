@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#define _USE_MATH_DEFINES
 #include "Craft.h"
-#include <cmath>
+#include "../fmath.h"
 #include "../Engine/Language.h"
+#include "../Engine/RNG.h"
 #include "../Mod/RuleCraft.h"
 #include "CraftWeapon.h"
 #include "../Mod/RuleCraftWeapon.h"
@@ -35,6 +35,7 @@
 #include "Vehicle.h"
 #include "../Mod/RuleItem.h"
 #include "../Mod/AlienDeployment.h"
+#include "../Engine/Logger.h"
 
 namespace OpenXcom
 {
@@ -107,16 +108,22 @@ void Craft::load(const YAML::Node &node, const Mod *mod, SavedGame *save)
 			else
 			{
 				_weapons[j] = 0;
+				if (type != "0")
+				{
+					Log(LOG_ERROR) << "Failed to load craft weapon " << type;
+				}
 			}
 			j++;
 		}
 	}
 
 	_items->load(node["items"]);
+	// Some old saves have bad items, better get rid of them to avoid further bugs
 	for (std::map<std::string, int>::iterator i = _items->getContents()->begin(); i != _items->getContents()->end();)
 	{
-		if (std::find(mod->getItemsList().begin(), mod->getItemsList().end(), i->first) == mod->getItemsList().end())
+		if (mod->getItem(i->first) == 0)
 		{
+			Log(LOG_ERROR) << "Failed to load item " << i->first;
 			_items->getContents()->erase(i++);
 		}
 		else
@@ -133,15 +140,15 @@ void Craft::load(const YAML::Node &node, const Mod *mod, SavedGame *save)
 			v->load(*i);
 			_vehicles.push_back(v);
 		}
+		else
+		{
+			Log(LOG_ERROR) << "Failed to load item " << type;
+		}
 	}
 	_status = node["status"].as<std::string>(_status);
 	_lowFuel = node["lowFuel"].as<bool>(_lowFuel);
 	_mission = node["mission"].as<bool>(_mission);
 	_interceptionOrder = node["interceptionOrder"].as<int>(_interceptionOrder);
-	if (const YAML::Node name = node["name"])
-	{
-		_name = Language::utf8ToWstr(name.as<std::string>());
-	}
 	if (const YAML::Node &dest = node["dest"])
 	{
 		std::string type = dest["type"].as<std::string>();
@@ -244,8 +251,6 @@ YAML::Node Craft::save() const
 		node["interceptionOrder"] = _interceptionOrder;
 	if (_takeoff != 0)
 		node["takeoff"] = _takeoff;
-	if (!_name.empty())
-		node["name"] = Language::wstrToUtf8(_name);
 	return node;
 }
 
@@ -307,25 +312,13 @@ int Craft::getId() const
 }
 
 /**
- * Returns the craft's unique identifying name.
- * If there's no custom name, the language default is used.
+ * Returns the craft's unique default name.
  * @param lang Language to get strings from.
  * @return Full name.
  */
-std::wstring Craft::getName(Language *lang) const
+std::wstring Craft::getDefaultName(Language *lang) const
 {
-	if (_name.empty())
-		return lang->getString("STR_CRAFTNAME").arg(lang->getString(_rules->getType())).arg(_id);
-	return _name;
-}
-
-/**
- * Changes the craft's custom name.
- * @param newName New custom name. If set to blank, the language default is used.
- */
-void Craft::setName(const std::wstring &newName)
-{
-	_name = newName;
+	return lang->getString("STR_CRAFTNAME").arg(lang->getString(_rules->getType())).arg(_id);
 }
 
 /**
@@ -744,8 +737,26 @@ void Craft::checkup()
  */
 bool Craft::detect(Target *target) const
 {
-	if (_rules->getRadarRange() == 0)
+	if (_rules->getRadarRange() == 0 || !insideRadarRange(target))
 		return false;
+
+	// backward compatibility with vanilla
+	if (_rules->getRadarChance() == 100)
+		return true;
+
+	Ufo *u = dynamic_cast<Ufo*>(target);
+	int chance = _rules->getRadarChance() * (100 + u->getVisibility()) / 100;
+	return RNG::percent(chance);
+}
+
+/**
+ * Returns if a certain target is inside the craft's
+ * radar range, taking in account the positions of both.
+ * @param target Pointer to target to compare.
+ * @return True if inside radar range.
+ */
+bool Craft::insideRadarRange(Target *target) const
+{
 	double range = _rules->getRadarRange() * (1 / 60.0) * (M_PI / 180);
 	return (getDistance(target) <= range);
 }
@@ -799,7 +810,7 @@ void Craft::refuel()
  * @param mod Pointer to mod.
  * @return The ammo ID missing for rearming, or "" if none.
  */
-std::string Craft::rearm(Mod *mod)
+std::string Craft::rearm(const Mod *mod)
 {
 	std::string ammo;
 	for (std::vector<CraftWeapon*>::iterator i = _weapons.begin(); ; ++i)
@@ -959,6 +970,48 @@ int Craft::getInterceptionOrder() const
 CraftId Craft::getUniqueId() const
 {
 	return std::make_pair(_rules->getType(), _id);
+}
+
+/**
+ * Unloads all the craft contents to the base.
+ * @param mod Pointer to mod.
+ */
+void Craft::unload(const Mod *mod)
+{
+	// Remove weapons
+	for (std::vector<CraftWeapon*>::iterator w = _weapons.begin(); w != _weapons.end(); ++w)
+	{
+		if ((*w) != 0)
+		{
+			_base->getStorageItems()->addItem((*w)->getRules()->getLauncherItem());
+			_base->getStorageItems()->addItem((*w)->getRules()->getClipItem(), (*w)->getClipsLoaded(mod));
+		}
+	}
+
+	// Remove items
+	for (std::map<std::string, int>::iterator it = _items->getContents()->begin(); it != _items->getContents()->end(); ++it)
+	{
+		_base->getStorageItems()->addItem(it->first, it->second);
+	}
+
+	// Remove vehicles
+	for (std::vector<Vehicle*>::iterator v = _vehicles.begin(); v != _vehicles.end(); ++v)
+	{
+		_base->getStorageItems()->addItem((*v)->getRules()->getType());
+		if (!(*v)->getRules()->getCompatibleAmmo()->empty())
+		{
+			_base->getStorageItems()->addItem((*v)->getRules()->getCompatibleAmmo()->front(), (*v)->getAmmo());
+		}
+	}
+
+	// Remove soldiers
+	for (std::vector<Soldier*>::iterator s = _base->getSoldiers()->begin(); s != _base->getSoldiers()->end(); ++s)
+	{
+		if ((*s)->getCraft() == this)
+		{
+			(*s)->setCraft(0);
+		}
+	}
 }
 
 }

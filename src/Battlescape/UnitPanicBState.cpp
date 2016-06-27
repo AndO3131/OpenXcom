@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -56,7 +56,7 @@ void UnitPanicBState::init()
 void UnitPanicBState::think()
 {
 	if (_unit)
-	{	
+	{
 		// berserking requires handling here, as the target selection isn't completely random
 		// and needs updating between shots.
 		if (!_unit->isOut() && _shotsFired < 10 && _berserking)

@@ -16,11 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef GIT_VERSION_H
+#define GIT_VERSION_H
 
-#include "Position.h"
+#ifndef OPENXCOM_VERSION_GIT
+#define OPENXCOM_VERSION_GIT "@OPENXCOM_VERSION_STRING@"
+#endif
 
-namespace OpenXcom
-{
-
-
-}
+#endif

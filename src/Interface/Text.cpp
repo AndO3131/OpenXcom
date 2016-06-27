@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -250,6 +250,16 @@ void Text::setVerticalAlign(TextVAlign valign)
 }
 
 /**
+ * Returns the way the text is aligned vertically
+ * relative to the drawing area.
+ * @return Horizontal alignment.
+ */
+TextVAlign Text::getVerticalAlign() const
+{
+	return _valign;
+}
+
+/**
  * Changes the color used to render the text. Unlike regular graphics,
  * fonts are greyscale so they need to be assigned a specific position
  * in the palette to be displayed.
@@ -368,7 +378,7 @@ void Text::processText()
 	_lineHeight.clear();
 
 	int width = 0, word = 0;
-	size_t space = 0;
+	size_t space = 0, textIndentation = 0;
 	bool start = true;
 	Font *font = _font;
 
@@ -394,6 +404,11 @@ void Text::processText()
 		// Keep track of spaces for wordwrapping
 		else if (Font::isSpace((*str)[c]) || Font::isSeparator((*str)[c]))
 		{
+			// Store existing indentation
+			if (c == textIndentation)
+			{
+				textIndentation++;
+			}
 			space = c;
 			width += font->getCharSize((*str)[c]).w;
 			word = 0;
@@ -414,11 +429,12 @@ void Text::processText()
 			// Wordwrap if the last word doesn't fit the line
 			if (_wrap && width >= getWidth() && !start)
 			{
+				size_t indentLocation = c;
 				if (_lang->getTextWrapping() == WRAP_WORDS || Font::isSpace((*str)[c]))
 				{
 					// Go back to the last space and put a linebreak there
 					width -= word;
-					size_t indent = space;
+					indentLocation = space;
 					if (Font::isSpace((*str)[space]))
 					{
 						width -= font->getCharSize((*str)[space]).w;
@@ -427,12 +443,7 @@ void Text::processText()
 					else
 					{
 						str->insert(space+1, L"\n");
-						indent++;
-					}
-					if (_indent)
-					{
-						str->insert(indent+1, L" \xA0");
-						width += font->getCharSize(L' ').w + font->getCharSize(L'\xA0').w;
+						indentLocation++;
 					}
 				}
 				else if (_lang->getTextWrapping() == WRAP_LETTERS)
@@ -441,6 +452,20 @@ void Text::processText()
 					str->insert(c, L"\n");
 					width -= charWidth;
 				}
+
+				// Keep initial indentation of text
+				if (textIndentation > 0)
+				{
+					str->insert(indentLocation+1, L" \xA0", textIndentation);
+					indentLocation += textIndentation;
+				}
+				// Indent due to word wrap.
+				if (_indent)
+				{
+					str->insert(indentLocation+1, L" \xA0");
+					width += font->getCharSize(L' ').w + font->getCharSize(L'\xA0').w;
+				}
+
 				_lineWidth.push_back(width);
 				_lineHeight.push_back(font->getCharSize(L'\n').h);
 				if (_lang->getTextWrapping() == WRAP_WORDS)

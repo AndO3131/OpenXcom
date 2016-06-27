@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -239,4 +239,5 @@ int RuleInventory::getListOrder() const
 {
 	return _listOrder;
 }
+
 }

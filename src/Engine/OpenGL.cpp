@@ -19,7 +19,7 @@
 #include "Logger.h"
 #include "Surface.h"
 
-namespace OpenXcom 
+namespace OpenXcom
 {
 	
 bool OpenGL::checkErrors = true;
@@ -142,7 +142,7 @@ Uint32 (APIENTRYP wglSwapIntervalEXT)(int interval);
   void OpenGL::refresh(bool smooth, unsigned inwidth, unsigned inheight, unsigned outwidth, unsigned outheight, int topBlackBand, int bottomBlackBand, int leftBlackBand, int rightBlackBand) {
     while (glGetError() != GL_NO_ERROR); // clear possible error from who knows where
 	clear();
-    if (shader_support && (fragmentshader || vertexshader)) {    
+    if (shader_support && (fragmentshader || vertexshader)) {
       glUseProgram(glprogram);
       GLint location;
 
@@ -231,21 +231,26 @@ Uint32 (APIENTRYP wglSwapIntervalEXT)(int interval);
     }
 
     if (source_yaml_filename && strlen(source_yaml_filename)) {
-      YAML::Node document = YAML::LoadFile(source_yaml_filename);
+	  try {
+        YAML::Node document = YAML::LoadFile(source_yaml_filename);
 
-      bool is_glsl;
-	  std::string language = document["language"].as<std::string>();
-	  is_glsl = (language == "GLSL");
+        bool is_glsl;
+	    std::string language = document["language"].as<std::string>();
+	    is_glsl = (language == "GLSL");
 
 
-      linear = document["linear"].as<bool>(false); // some shaders want texture linear interpolation and some don't
-      std::string fragment_source = document["fragment"].as<std::string>("");
-	  std::string vertex_source = document["vertex"].as<std::string>("");
+        linear = document["linear"].as<bool>(false); // some shaders want texture linear interpolation and some don't
+        std::string fragment_source = document["fragment"].as<std::string>("");
+	    std::string vertex_source = document["vertex"].as<std::string>("");
 
-      if (is_glsl) {
-        if (!fragment_source.empty()) set_fragment_shader(fragment_source.c_str());
-        if (!vertex_source.empty()) set_vertex_shader(vertex_source.c_str());
-      }
+        if (is_glsl) {
+          if (!fragment_source.empty()) set_fragment_shader(fragment_source.c_str());
+          if (!vertex_source.empty()) set_vertex_shader(vertex_source.c_str());
+        }
+	  }
+	  catch (YAML::Exception &e) {
+	    Log(LOG_ERROR) << source_yaml_filename << ": " << e.what();
+	  }
     }
 
     glLinkProgram(glprogram);

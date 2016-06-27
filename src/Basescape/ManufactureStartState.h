@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,13 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_MANUFACTURESTARTSTATE_H
-#define OPENXCOM_MANUFACTURESTARTSTATE_H
-
 #include "../Engine/State.h"
 
 namespace OpenXcom
 {
+
 class Base;
 class RuleManufacture;
 class Window;
@@ -36,19 +35,19 @@ class TextList;
 class ManufactureStartState : public State
 {
 private:
-	Base * _base;
-	RuleManufacture * _item;
-	Window * _window;
-	TextButton * _btnCancel, * _btnStart;
-	Text * _txtTitle, * _txtManHour, * _txtCost, * _txtWorkSpace, * _txtRequiredItemsTitle, * _txtItemNameColumn, * _txtUnitRequiredColumn, * _txtUnitAvailableColumn;
-	TextList * _lstRequiredItems;
+	Base *_base;
+	RuleManufacture *_item;
+	Window *_window;
+	TextButton *_btnCancel, *_btnStart;
+	Text *_txtTitle, *_txtManHour, *_txtCost, *_txtWorkSpace, *_txtRequiredItemsTitle, *_txtItemNameColumn, *_txtUnitRequiredColumn, *_txtUnitAvailableColumn;
+	TextList *_lstRequiredItems;
 public:
 	/// Creates the State.
-	ManufactureStartState(Base * base, RuleManufacture * item);
+	ManufactureStartState(Base *base, RuleManufacture *item);
 	/// Handler for the Cancel button.
-	void btnCancelClick(Action * action);
+	void btnCancelClick(Action *action);
 	/// Handler for the start button.
-	void btnStartClick(Action * action);
+	void btnStartClick(Action *action);
 };
+
 }
-#endif

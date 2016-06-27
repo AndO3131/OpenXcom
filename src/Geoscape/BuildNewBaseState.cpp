@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -17,7 +17,6 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "BuildNewBaseState.h"
-#include <cmath>
 #include "../fmath.h"
 #include "../Engine/Game.h"
 #include "../Engine/Action.h"
@@ -392,4 +391,5 @@ void BuildNewBaseState::resize(int &dX, int &dY)
 		}
 	}
 }
+
 }

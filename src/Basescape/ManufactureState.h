@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_MANUFACTURESTATE_H
-#define OPENXCOM_MANUFACTURESTATE_H
-
 #include "../Engine/State.h"
 
 namespace OpenXcom
@@ -41,7 +39,7 @@ private:
 	TextButton *_btnNew, *_btnOk;
 	Window *_window;
 	Text *_txtTitle, *_txtAvailable, *_txtAllocated, *_txtSpace, *_txtFunds, *_txtItem, *_txtEngineers, *_txtProduced, *_txtCost, *_txtTimeLeft;
-	TextList *_lstManufacture;	
+	TextList *_lstManufacture;
 	void lstManufactureClick(Action * action);
 public:
 	/// Creates the Manufacture state.
@@ -59,5 +57,3 @@ public:
 };
 
 }
-
-#endif

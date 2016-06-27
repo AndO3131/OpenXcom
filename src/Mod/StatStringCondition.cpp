@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#define _USE_MATH_DEFINES
 #include "StatStringCondition.h"
 
 
@@ -46,7 +45,7 @@ StatStringCondition::~StatStringCondition()
  * Gets the condition string.
  * @return Name of the associated stat.
  */
-std::string StatStringCondition::getConditionName()
+std::string StatStringCondition::getConditionName() const
 {
 	return _conditionName;
 }
@@ -55,7 +54,7 @@ std::string StatStringCondition::getConditionName()
  * Gets the minimum value for the condition (default is 0).
  * @return The minimum value.
  */
-int StatStringCondition::getMinVal()
+int StatStringCondition::getMinVal() const
 {
 	return _minVal;
 }
@@ -64,9 +63,29 @@ int StatStringCondition::getMinVal()
  * Gets the maximum value for the condition (default is 255).
  * @return The maximum value.
  */
-int StatStringCondition::getMaxVal()
+int StatStringCondition::getMaxVal() const
 {
 	return _maxVal;
+}
+
+/**
+ * Checks if this condition is valid for the current stat.
+ * @param stat The current soldier stat.
+ * @param psi Can we show psi stats?
+ * @return If the condition is met.
+ */
+bool StatStringCondition::isMet(int stat, bool psi) const
+{
+	if (_conditionName == "psiTraining")
+	{
+		return true;
+	}
+	bool conditionMet = (stat >= _minVal && stat <= _maxVal);
+	if (_conditionName == "psiStrength" || _conditionName == "psiSkill")
+	{
+		conditionMet = conditionMet && psi;
+	}
+	return conditionMet;
 }
 
 }

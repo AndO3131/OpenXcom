@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -22,7 +22,7 @@ namespace OpenXcom
 {
 
 
-Node::Node() : _id(0), _segment(0), _type(0), _rank(0), _flags(0), _reserved(0), _priority(0), _allocated(false)
+Node::Node() : _id(0), _segment(0), _type(0), _rank(0), _flags(0), _reserved(0), _priority(0), _allocated(false), _dummy(false)
 {
 
 }
@@ -38,7 +38,7 @@ Node::Node() : _id(0), _segment(0), _type(0), _rank(0), _flags(0), _reserved(0),
  * @param reserved
  * @param priority
  */
-Node::Node(int id, Position pos, int segment, int type, int rank, int flags, int reserved, int priority) : _id(id), _pos(pos), _segment(segment), _type(type), _rank(rank), _flags(flags), _reserved(reserved), _priority(priority), _allocated(false)
+Node::Node(int id, Position pos, int segment, int type, int rank, int flags, int reserved, int priority) : _id(id), _pos(pos), _segment(segment), _type(type), _rank(rank), _flags(flags), _reserved(reserved), _priority(priority), _allocated(false), _dummy(false)
 {
 }
 
@@ -54,7 +54,7 @@ Node::~Node()
 
 /* following data is the order in which certain alien ranks spawn on certain node ranks */
 /* note that they all can fall back to rank 0 nodes - which is scout (outside ufo) */
-const int Node::nodeRank[8][7] = { 
+const int Node::nodeRank[8][7] = {
 	{ 4, 3, 5, 8, 7, 2, 0 }, //commander
 	{ 4, 3, 5, 8, 7, 2, 0 }, //leader
 	{ 5, 4, 3, 2, 7, 8, 0 }, //engineer
@@ -82,6 +82,7 @@ void Node::load(const YAML::Node &node)
 	_priority = node["priority"].as<int>(_priority);
 	_allocated = node["allocated"].as<bool>(_allocated);
 	_nodeLinks = node["links"].as< std::vector<int> >(_nodeLinks);
+	_dummy = node["dummy"].as<bool>(_dummy);
 }
 
 /**
@@ -101,6 +102,7 @@ YAML::Node Node::save() const
 	node["priority"] = _priority;
 	node["allocated"] = _allocated;
 	node["links"] = _nodeLinks;
+	node["dummy"] = _dummy;
 	return node;
 }
 
@@ -186,8 +188,17 @@ bool Node::isTarget() const
 
 void Node::setType(int type)
 {
-    _type = type;
+	_type = type;
 }
 
+void Node::setDummy(bool dummy)
+{
+	_dummy = dummy;
+}
+
+bool Node::isDummy() const
+{
+	return _dummy;
+}
 
 }

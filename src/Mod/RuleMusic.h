@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,10 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef OPENXCOM_RULEMUSIC_H
-#define OPENXCOM_RULEMUSIC_H
-
 #include <string>
 #include <yaml-cpp/yaml.h>
 
@@ -36,10 +33,8 @@ public:
 	RuleMusic(const std::string &type);
 	~RuleMusic();
 	void load(const YAML::Node& node);
-	int getCatPos();
-	float getNormalization();
+	int getCatPos() const;
+	float getNormalization() const;
 };
 
 }
-
-#endif

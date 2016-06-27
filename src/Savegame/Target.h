@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_TARGET_H
-#define OPENXCOM_TARGET_H
-
 #include <string>
 #include <vector>
 #include <yaml-cpp/yaml.h>
@@ -36,6 +34,7 @@ class Target
 {
 protected:
 	double _lon, _lat;
+	std::wstring _name;
 	int _depth;
 	std::vector<Target*> _followers;
 	/// Creates a target.
@@ -58,7 +57,11 @@ public:
 	/// Sets the target's latitude.
 	void setLatitude(double lat);
 	/// Gets the target's name.
-	virtual std::wstring getName(Language *lang) const = 0;
+	virtual std::wstring getName(Language *lang) const;
+	/// Sets the target's name.
+	void setName(const std::wstring &newName);
+	/// Gets the target's default name.
+	virtual std::wstring getDefaultName(Language *lang) const = 0;
 	/// Gets the target's marker.
 	virtual int getMarker() const = 0;
 	/// Gets the target's followers.
@@ -66,11 +69,9 @@ public:
 	/// Gets the distance to another target.
 	double getDistance(const Target *target) const;
 	/// Gets the depth of the target.
-	int getSiteDepth();
+	int getSiteDepth() const;
 	/// Sets the depth of the target.
 	void setSiteDepth(int depth);
 };
 
 }
-
-#endif

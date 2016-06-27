@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -17,6 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ManufactureInfoState.h"
+#include <algorithm>
 #include "../Interface/Window.h"
 #include "../Interface/TextButton.h"
 #include "../Interface/ToggleTextButton.h"
@@ -27,13 +28,15 @@
 #include "../Engine/Language.h"
 #include "../Engine/Options.h"
 #include "../Mod/Mod.h"
+#include "../Mod/RuleCraft.h"
+#include "../Mod/RuleItem.h"
 #include "../Mod/RuleManufacture.h"
 #include "../Savegame/Base.h"
 #include "../Savegame/Production.h"
 #include "../Engine/Timer.h"
 #include "../Menu/ErrorMessageState.h"
 #include "../Mod/RuleInterface.h"
-#include <limits>
+#include <climits>
 
 namespace OpenXcom
 {
@@ -67,25 +70,26 @@ void ManufactureInfoState::buildUi()
 {
 	_screen = false;
 
-	_window = new Window(this, 320, 150, 0, 25, POPUP_BOTH);
-	_txtTitle = new Text(320, 17, 0, 35);
-	_btnOk = new TextButton(136, 16, 168, 150);
-	_btnStop = new TextButton(136, 16, 16, 150);
-	_btnSell = new ToggleTextButton(60, 16, 244, 56);
-	_txtAvailableEngineer = new Text(200, 9, 16, 55);
-	_txtAvailableSpace = new Text(200, 9, 16, 65);
-	_txtAllocatedEngineer = new Text(112, 32, 16, 75);
-	_txtUnitToProduce = new Text(112, 48, 168, 59);
-	_txtEngineerUp = new Text(90, 9, 40, 113);
-	_txtEngineerDown = new Text(90, 9, 40, 133);
-	_txtUnitUp = new Text(90, 9, 192, 113);
-	_txtUnitDown = new Text(90, 9, 192, 133);
-	_btnEngineerUp = new ArrowButton(ARROW_BIG_UP, 13, 14, 132, 109);
-	_btnEngineerDown = new ArrowButton(ARROW_BIG_DOWN, 13, 14, 132, 131);
-	_btnUnitUp = new ArrowButton(ARROW_BIG_UP, 13, 14, 284, 109);
-	_btnUnitDown = new ArrowButton(ARROW_BIG_DOWN, 13, 14, 284, 131);
-	_txtAllocated = new Text(40, 16, 128, 83);
-	_txtTodo = new Text(40, 16, 280, 83);
+	_window = new Window(this, 320, 160, 0, 20, POPUP_BOTH);
+	_txtTitle = new Text(320, 17, 0, 30);
+	_btnOk = new TextButton(136, 16, 168, 155);
+	_btnStop = new TextButton(136, 16, 16, 155);
+	_btnSell = new ToggleTextButton(60, 16, 244, 61);
+	_txtAvailableEngineer = new Text(160, 9, 16, 50);
+	_txtAvailableSpace = new Text(160, 9, 16, 60);
+	_txtMonthlyProfit = new Text(160, 9, 168, 50);
+	_txtAllocatedEngineer = new Text(112, 32, 16, 80);
+	_txtUnitToProduce = new Text(112, 48, 168, 64);
+	_txtEngineerUp = new Text(90, 9, 40, 118);
+	_txtEngineerDown = new Text(90, 9, 40, 138);
+	_txtUnitUp = new Text(90, 9, 192, 118);
+	_txtUnitDown = new Text(90, 9, 192, 138);
+	_btnEngineerUp = new ArrowButton(ARROW_BIG_UP, 13, 14, 132, 114);
+	_btnEngineerDown = new ArrowButton(ARROW_BIG_DOWN, 13, 14, 132, 136);
+	_btnUnitUp = new ArrowButton(ARROW_BIG_UP, 13, 14, 284, 114);
+	_btnUnitDown = new ArrowButton(ARROW_BIG_DOWN, 13, 14, 284, 136);
+	_txtAllocated = new Text(40, 16, 128, 88);
+	_txtTodo = new Text(40, 16, 280, 88);
 
 	_surfaceEngineers = new InteractiveSurface(160, 150, 0, 25);
 	_surfaceEngineers->onMouseClick((ActionHandler)&ManufactureInfoState::handleWheelEngineer, 0);
@@ -102,6 +106,7 @@ void ManufactureInfoState::buildUi()
 	add(_txtTitle, "text", "manufactureInfo");
 	add(_txtAvailableEngineer, "text", "manufactureInfo");
 	add(_txtAvailableSpace, "text", "manufactureInfo");
+	add(_txtMonthlyProfit, "text", "manufactureInfo");
 	add(_txtAllocatedEngineer, "text", "manufactureInfo");
 	add(_txtAllocated, "text", "manufactureInfo");
 	add(_txtUnitToProduce, "text", "manufactureInfo");
@@ -165,6 +170,7 @@ void ManufactureInfoState::buildUi()
 	_txtUnitDown->setText(tr("STR_DECREASE_UC"));
 
 	_btnSell->setText(tr("STR_SELL_PRODUCTION"));
+	_btnSell->onMouseClick((ActionHandler)&ManufactureInfoState::btnSellClick, 0);
 
 	_btnOk->setText(tr("STR_OK"));
 	_btnOk->onMouseClick((ActionHandler)&ManufactureInfoState::btnOkClick);
@@ -178,8 +184,9 @@ void ManufactureInfoState::buildUi()
 		_production = new Production (_item, 1);
 		_base->addProduction(_production);
 	}
-	setAssignedEngineer();
 	_btnSell->setPressed(_production->getSellItems());
+	initProfitInfo();
+	setAssignedEngineer();
 
 	_timerMoreEngineer = new Timer(250);
 	_timerLessEngineer = new Timer(250);
@@ -191,6 +198,53 @@ void ManufactureInfoState::buildUi()
 	_timerLessUnit->onTimer((StateHandler)&ManufactureInfoState::onLessUnit);
 }
 
+void ManufactureInfoState::initProfitInfo ()
+{
+	Mod *mod = _game->getMod();
+	const RuleManufacture *item = _production->getRules();
+
+	_producedItemsValue = 0;
+	for (std::map<std::string, int>::const_iterator i = item->getProducedItems().begin(); i != item->getProducedItems().end(); ++i)
+	{
+		int sellValue = 0;
+		if (item->getCategory() == "STR_CRAFT")
+		{
+			sellValue = mod->getCraft(i->first)->getSellCost();
+		}
+		else
+		{
+			sellValue = mod->getItem(i->first)->getSellCost();
+		}
+		_producedItemsValue += sellValue * i->second;
+	}
+}
+
+// note that this function calculates only the change in funds, not the change
+// in net worth.  after discussion in the forums, it was decided that focusing
+// only on visible changes in funds was clearer and more valuable to the player
+// than trying to take used materials and maintenance costs into account.
+int ManufactureInfoState::getMonthlyNetFunds () const
+{
+	// does not take into account leap years, but a game is unlikely to take long enough for that to matter
+	static const int AVG_HOURS_PER_MONTH = (365 * 24) / 12;
+
+	const RuleManufacture *item = _production->getRules();
+	int saleValue = _btnSell->getPressed() ? _producedItemsValue : 0;
+
+	int numEngineers = _production->getAssignedEngineers();
+	int manHoursPerMonth = AVG_HOURS_PER_MONTH * numEngineers;
+	if (!_production->getInfiniteAmount())
+	{
+		// scale down to actual number of man hours required if the job will
+		// take less than one month
+		int manHoursRemaining = item->getManufactureTime() * (_production->getAmountTotal() - _production->getAmountProduced());
+		manHoursPerMonth = std::min(manHoursPerMonth, manHoursRemaining);
+	}
+	float itemsPerMonth = (float)manHoursPerMonth / (float)item->getManufactureTime();
+
+	return (saleValue - item->getManufactureCost()) * itemsPerMonth;
+}
+
 /**
  * Frees up memory that's not automatically cleaned on exit
  */
@@ -200,6 +254,15 @@ ManufactureInfoState::~ManufactureInfoState()
 	delete _timerLessEngineer;
 	delete _timerMoreUnit;
 	delete _timerLessUnit;
+}
+
+/**
+ * Refreshes profit values.
+ * @param action A pointer to an Action.
+ */
+void ManufactureInfoState::btnSellClick(Action *)
+{
+	setAssignedEngineer();
 }
 
 /**
@@ -220,7 +283,7 @@ void ManufactureInfoState::btnOkClick(Action *)
 {
 	if (_item)
 	{
-		_production->startItem(_base, _game->getSavedGame());
+		_production->startItem(_base, _game->getSavedGame(), _game->getMod());
 	}
 	_production->setSellItems(_btnSell->getPressed());
 	exitState();
@@ -253,6 +316,7 @@ void ManufactureInfoState::setAssignedEngineer()
 	if (_production->getInfiniteAmount()) s4 << Language::utf8ToWstr("∞");
 	else s4 << _production->getAmountTotal();
 	_txtTodo->setText(s4.str());
+	_txtMonthlyProfit->setText(tr("STR_MONTHLY_PROFIT").arg(Text::formatFunding(getMonthlyNetFunds()).c_str()));
 }
 
 /**
@@ -301,7 +365,7 @@ void ManufactureInfoState::moreEngineerRelease(Action *action)
  */
 void ManufactureInfoState::moreEngineerClick(Action *action)
 {
-	if (action->getDetails()->button.button == SDL_BUTTON_RIGHT) moreEngineer(std::numeric_limits<int>::max());
+	if (action->getDetails()->button.button == SDL_BUTTON_RIGHT) moreEngineer(INT_MAX);
 	if (action->getDetails()->button.button == SDL_BUTTON_LEFT) moreEngineer(1);
 }
 
@@ -350,7 +414,7 @@ void ManufactureInfoState::lessEngineerRelease(Action *action)
  */
 void ManufactureInfoState::lessEngineerClick(Action *action)
 {
-	if (action->getDetails()->button.button == SDL_BUTTON_RIGHT) lessEngineer(std::numeric_limits<int>::max());
+	if (action->getDetails()->button.button == SDL_BUTTON_RIGHT) lessEngineer(INT_MAX);
 	if (action->getDetails()->button.button == SDL_BUTTON_LEFT) lessEngineer(1);
 }
 
@@ -369,7 +433,7 @@ void ManufactureInfoState::moreUnit(int change)
 	else
 	{
 		int units = _production->getAmountTotal();
-		change = std::min(std::numeric_limits<int>::max()-units, change);
+		change = std::min(INT_MAX - units, change);
 		if (_production->getRules()->getCategory() == "STR_CRAFT")
 			change = std::min(_base->getAvailableHangars() - _base->getUsedHangars(), change);
 		_production->setAmountTotal(units+change);
@@ -383,7 +447,7 @@ void ManufactureInfoState::moreUnit(int change)
  */
 void ManufactureInfoState::moreUnitPress(Action *action)
 {
-	if (action->getDetails()->button.button == SDL_BUTTON_LEFT && _production->getAmountTotal() < std::numeric_limits<int>::max())
+	if (action->getDetails()->button.button == SDL_BUTTON_LEFT && _production->getAmountTotal() < INT_MAX)
 		_timerMoreUnit->start();
 }
 
@@ -411,7 +475,7 @@ void ManufactureInfoState::moreUnitClick(Action *action)
 	{
 		if (_production->getRules()->getCategory() == "STR_CRAFT")
 		{
-			moreUnit(std::numeric_limits<int>::max());
+			moreUnit(INT_MAX);
 		}
 		else
 		{
@@ -547,4 +611,5 @@ void ManufactureInfoState::think()
 	_timerMoreUnit->think(this, 0);
 	_timerLessUnit->think(this, 0);
 }
+
 }

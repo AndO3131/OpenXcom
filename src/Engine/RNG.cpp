@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -17,7 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "RNG.h"
-#include <math.h>
+#include <cmath>
 #include <time.h>
 #include <stdlib.h>
 #ifndef UINT64_MAX
@@ -164,4 +164,5 @@ int generateEx(int max)
 }
 
 }
+
 }

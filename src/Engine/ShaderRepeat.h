@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,10 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef OPENXCOM_SHADERREPEAT_H
-#define	OPENXCOM_SHADERREPEAT_H
-
 #include <vector>
 #include "ShaderDraw.h"
 
@@ -60,7 +57,7 @@ public:
 		_off_x(0),
 		_off_y(0)
 	{
-
+		setOffset(0, 0);
 	}
 
 	inline ShaderRepeat(const ShaderRepeat& s):
@@ -68,7 +65,7 @@ public:
 		_off_x(s._off_x),
 		_off_y(s._off_y)
 	{
-
+		setOffset(0, 0);
 	}
 
 	inline void setOffset(int x, int y)
@@ -197,7 +194,5 @@ struct controler<ShaderRepeat<Pixel> >
 };
 
 }//namespace helper
+
 }//namespace OpenXcom
-
-#endif	/* OPENXCOM_SHADERREPEAT_H */
-

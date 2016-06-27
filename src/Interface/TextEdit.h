@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_TEXTEDIT_H
-#define OPENXCOM_TEXTEDIT_H
-
 #include "../Engine/InteractiveSurface.h"
 #include "Text.h"
 
@@ -26,6 +24,7 @@ namespace OpenXcom
 {
 
 class Timer;
+enum TextEditConstraint { TEC_NONE, TEC_NUMERIC_POSITIVE, TEC_NUMERIC };
 
 /**
  * Editable version of Text.
@@ -41,11 +40,13 @@ private:
 	Timer *_timer;
 	wchar_t _ascii;
 	size_t _caretPos;
-	bool _numerical;
+	TextEditConstraint _textEditConstraint;
 	ActionHandler _change;
 	State *_state;
 	/// Checks if a character will exceed the maximum width.
 	bool exceedsMaxWidth(wchar_t c);
+	/// Checks if character is valid to be inserted at caret position.
+	bool isValidChar(Uint16 key);
 public:
 	/// Creates a new text edit with the specified size and position.
 	TextEdit(State *state, int width, int height, int x = 0, int y = 0);
@@ -75,8 +76,8 @@ public:
 	void setAlign(TextHAlign align);
 	/// Sets the text edit's vertical alignment.
 	void setVerticalAlign(TextVAlign valign);
-	/// Sets the text edit to numerical input.
-	void setNumerical(bool numerical);
+	/// Sets the text edit constraint.
+	void setConstraint(TextEditConstraint constraint);
 	/// Sets the text edit's color.
 	void setColor(Uint8 color);
 	/// Gets the text edit's color.
@@ -102,5 +103,3 @@ public:
 };
 
 }
-
-#endif

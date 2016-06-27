@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,13 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_SAVEDBATTLEGAME_H
-#define OPENXCOM_SAVEDBATTLEGAME_H
-
 #include <vector>
 #include <string>
 #include <yaml-cpp/yaml.h>
 #include "BattleUnit.h"
+#include "../Mod/AlienDeployment.h"
 
 namespace OpenXcom
 {
@@ -76,6 +75,9 @@ private:
 	double _ambientVolume;
 	std::vector<BattleItem*> _recoverGuaranteed, _recoverConditional;
 	std::string _music;
+	int _turnLimit, _cheatTurn;
+	ChronoTrigger _chronoTrigger;
+	bool _beforeGame;
 	/// Selects a soldier.
 	BattleUnit *selectPlayerUnit(int dir, bool checkReselect = false, bool setReselect = false, bool checkInventory = false);
 public:
@@ -187,7 +189,7 @@ public:
 	/// increments the objective counter.
 	void addDestroyedObjective();
 	/// Checks if all the objectives are destroyed.
-	bool allObjectivesDestroyed();
+	bool allObjectivesDestroyed() const;
 	/// Gets the current item ID.
 	int *getCurrentItemId();
 	/// Gets a spawn node.
@@ -229,9 +231,9 @@ public:
 	/// Resets the visibility of all tiles on the map.
 	void resetTiles();
 	/// get an 11x11 grid of positions (-10 to +10) to check.
-	const std::vector<Position> getTileSearch();
+	const std::vector<Position> &getTileSearch() const;
 	/// check if the AI has engaged cheat mode.
-	bool isCheating();
+	bool isCheating() const;
 	/// get the reserved fire mode.
 	BattleActionType getTUReserved() const;
 	/// set the reserved fire mode.
@@ -271,13 +273,22 @@ public:
 	/// Sets the objective type for this mission.
 	void setObjectiveType(int type);
 	/// Gets the objective type of this mission.
-	SpecialTileType getObjectiveType();
+	SpecialTileType getObjectiveType() const;
 	/// sets the ambient sound effect;
 	void setAmbientVolume(double volume);
 	/// gets the ambient sound effect;
 	double getAmbientVolume() const;
+	/// Gets the turn limit for this mission.
+	int getTurnLimit() const;
+	/// Gets the action that triggers when the timer runs out.
+	ChronoTrigger getChronoTrigger() const;
+	/// Sets the turn limit for this mission.
+	void setTurnLimit(int limit);
+	/// Sets the action that triggers when the timer runs out.
+	void setChronoTrigger(ChronoTrigger trigger);
+	/// Sets the turn to start the aliens cheating.
+	void setCheatTurn(int turn);
+	bool isBeforeGame() const;
 };
 
 }
-
-#endif

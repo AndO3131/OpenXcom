@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_MOD_H
-#define OPENXCOM_MOD_H
-
 #include <map>
 #include <vector>
 #include <string>
@@ -74,6 +72,7 @@ class RuleCommendations;
 class StatString;
 class RuleInterface;
 class RuleGlobe;
+class RuleConverter;
 class SoundDefinition;
 class MapScript;
 class RuleVideo;
@@ -134,7 +133,8 @@ private:
 	std::vector<StatString*> _statStrings;
 	std::map<std::string, RuleMusic *> _musicDefs;
 	RuleGlobe *_globe;
-	int _costEngineer, _costScientist, _timePersonnel, _initialFunding, _turnAIUseGrenade, _turnAIUseBlaster;
+	RuleConverter *_converter;
+	int _costEngineer, _costScientist, _timePersonnel, _initialFunding, _turnAIUseGrenade, _turnAIUseBlaster, _defeatScore, _defeatFunds;
 	std::pair<std::string, int> _alienFuel;
 	std::string _fontName, _finalResearch;
 	YAML::Node _startingBase;
@@ -154,7 +154,10 @@ private:
 	void loadFile(const std::string &filename);
 	/// Loads a ruleset element.
 	template <typename T>
-	T *loadRule(const YAML::Node &node, std::map<std::string, T*> *map, std::vector<std::string> *index = 0, const std::string &key = "type");
+	T *loadRule(const YAML::Node &node, std::map<std::string, T*> *map, std::vector<std::string> *index = 0, const std::string &key = "type") const;
+	/// Gets a ruleset element.
+	template <typename T>
+	T *getRule(const std::string &id, const std::string &name, const std::map<std::string, T*> &map) const;
 	/// Gets a random music. This is private to prevent access, use playMusic(name, true) instead.
 	Music *getRandomMusic(const std::string &name) const;
 	/// Gets a particular sound set. This is private to prevent access, use getSound(name, id) instead.
@@ -329,7 +332,7 @@ public:
 	/// Gets the list of all manufacture projects.
 	const std::vector<std::string> &getManufactureList() const;
 	/// Gets facilities for custom bases.
-	std::vector<OpenXcom::RuleBaseFacility*> getCustomBaseFacilities() const;
+	std::vector<RuleBaseFacility*> getCustomBaseFacilities() const;
 	/// Gets a specific UfoTrajectory.
 	const UfoTrajectory *getUfoTrajectory(const std::string &id) const;
 	/// Gets the ruleset for a specific alien mission.
@@ -374,22 +377,24 @@ public:
 	int getMinRadarRange() const;
 	/// Gets information on an interface element.
 	RuleInterface *getInterface(const std::string &id) const;
-	/// Gets the ruleset for the globe
+	/// Gets the ruleset for the globe.
 	RuleGlobe *getGlobe() const;
+	/// Gets the ruleset for the converter.
+	RuleConverter *getConverter() const;
 	/// Gets the list of selective files for insertion into our cat files.
 	const std::map<std::string, SoundDefinition *> *getSoundDefinitions() const;
-	/// Gets the list of transparency colors, 
+	/// Gets the list of transparency colors,
 	const std::vector<SDL_Color> *getTransparencies() const;
 	const std::vector<MapScript*> *getMapScript(std::string id) const;
-	/// Gets the list videos for intro/outro etc.
-	const std::map<std::string, RuleVideo *> *getVideos() const;
+	/// Gets a video for intro/outro etc.
+	RuleVideo *getVideo(const std::string &id) const;
 	const std::map<std::string, RuleMusic *> *getMusic() const;
 	const std::vector<std::string> *getMissionScriptList() const;
 	RuleMissionScript *getMissionScript(const std::string &name) const;
 	std::string getFinalResearch() const;
 	StatAdjustment *getStatAdjustment(int difficulty);
+	int getDefeatScore() const;
+	int getDefeatFunds() const;
 };
 
 }
-
-#endif

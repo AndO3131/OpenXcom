@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,13 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_MANUFACTUREINFOSTATE_H
-#define OPENXCOM_MANUFACTUREINFOSTATE_H
-
 #include "../Engine/State.h"
 
 namespace OpenXcom
 {
+
 class Base;
 class Window;
 class Text;
@@ -46,10 +45,17 @@ private:
 	Window * _window;
 	ArrowButton * _btnUnitUp, * _btnUnitDown, * _btnEngineerUp, * _btnEngineerDown;
 	TextButton * _btnStop, * _btnOk;
-	Text * _txtTitle, * _txtAvailableEngineer, * _txtAvailableSpace, * _txtAllocatedEngineer, * _txtUnitToProduce, * _txtUnitUp, * _txtUnitDown, * _txtEngineerUp, * _txtEngineerDown, * _txtAllocated, * _txtTodo;
+	Text * _txtTitle, * _txtAvailableEngineer, * _txtAvailableSpace, * _txtMonthlyProfit, * _txtAllocatedEngineer, * _txtUnitToProduce, * _txtUnitUp, * _txtUnitDown, * _txtEngineerUp, * _txtEngineerDown, * _txtAllocated, * _txtTodo;
 	ToggleTextButton *_btnSell;
 	Timer * _timerMoreEngineer, * _timerMoreUnit, * _timerLessEngineer, * _timerLessUnit;
 	InteractiveSurface *_surfaceEngineers, *_surfaceUnits;
+	int _producedItemsValue;
+	/// Caches static data for monthly profit calculations
+	void initProfitInfo ();
+	/// Calculates the monthly change in funds due to the job
+	int getMonthlyNetFunds () const;
+	/// Handler for the Sell button.
+	void btnSellClick (Action * action);
 	/// Handler for the Stop button.
 	void btnStopClick (Action * action);
 	/// Handler for the OK button.
@@ -114,5 +120,5 @@ public:
 	/// Cleans up the state
 	~ManufactureInfoState();
 };
+
 }
-#endif

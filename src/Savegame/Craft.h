@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_CRAFT_H
-#define OPENXCOM_CRAFT_H
-
 #include "MovingTarget.h"
 #include <utility>
 #include <vector>
@@ -55,7 +53,6 @@ private:
 	std::vector<Vehicle*> _vehicles;
 	std::string _status;
 	bool _lowFuel, _mission, _inBattlescape, _inDogfight;
-	std::wstring _name;
 public:
 	/// Creates a craft of the specified type.
 	Craft(RuleCraft *rules, Base *base, int id = 0);
@@ -75,10 +72,8 @@ public:
 	void changeRules(RuleCraft *rules);
 	/// Gets the craft's ID.
 	int getId() const;
-	/// Gets the craft's name.
-	std::wstring getName(Language *lang) const;
-	/// Sets the craft's name.
-	void setName(const std::wstring &newName);
+	/// Gets the craft's default name.
+	std::wstring getDefaultName(Language *lang) const;
 	/// Gets the craft's marker.
 	int getMarker() const;
 	/// Gets the craft's base.
@@ -139,6 +134,8 @@ public:
 	void returnToBase();
 	/// Checks if a target is detected by the craft's radar.
 	bool detect(Target *target) const;
+	/// Checks if a target is inside the craft's radar range.
+	bool insideRadarRange(Target *target) const;
 	/// Handles craft logic.
 	void think();
 	/// Does a craft full checkup.
@@ -150,7 +147,7 @@ public:
 	/// Refuels the craft.
 	void refuel();
 	/// Rearms the craft.
-	std::string rearm(Mod *mod);
+	std::string rearm(const Mod *mod);
 	/// Sets the craft's battlescape status.
 	void setInBattlescape(bool inbattle);
 	/// Gets if the craft is in battlescape.
@@ -173,8 +170,8 @@ public:
 	int getInterceptionOrder() const;
 	/// Gets the craft's unique id.
 	CraftId getUniqueId() const;
+	/// Unloads the craft.
+	void unload(const Mod *mod);
 };
 
 }
-
-#endif

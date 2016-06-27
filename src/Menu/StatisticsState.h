@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,32 +17,40 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include "Exception.h"
+#include "../Engine/State.h"
 
 namespace OpenXcom
 {
 
-/**
- * Creates a new exception.
- * @param msg Exception message.
- */
-Exception::Exception(const std::string &msg) throw(): _msg(msg)
-{
-}
-
-Exception::~Exception() throw()
-{
-}
+class TextButton;
+class Window;
+class Text;
+class TextList;
 
 /**
- * Returns the message describing the exception
- * that occurred.
- * @return Exception message.
+ * Statistics window that shows up
+ * at the end of the game.
  */
-const char *Exception::what() const throw()
+class StatisticsState : public State
 {
-	return _msg.c_str();
-}
+private:
+	TextButton *_btnOk;
+	Window *_window;
+	Text *_txtTitle;
+	TextList *_lstStats;
+
+	// Sums a list of numbers.
+	template <typename T>
+	T sumVector(const std::vector<T> &vec) const;
+public:
+	/// Creates the New Game state.
+	StatisticsState();
+	/// Cleans up the New Game state.
+	~StatisticsState();
+	/// Gets the save stats.
+	void listStats();
+	/// Handler for clicking the Ok button.
+	void btnOkClick(Action *action);
+};
 
 }

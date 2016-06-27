@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -184,13 +184,9 @@ void UnitWalkBState::think()
 				Position voxelHere = (posHere * Position(16,16,24)) + Position(8,8,-(_unit->getTile()->getTerrainLevel()));
 				_parent->getTileEngine()->hit(voxelHere, _unit->getBaseStats()->strength, DT_IN, _unit);
 				
-				if (_unit->getPosition() != posHere) // ie: we burned a hole in the floor and fell through it
+				if (_unit->getStatus() != STATUS_STANDING) // ie: we burned a hole in the floor and fell through it
 				{
-					_action.TU = 0;
 					_pf->abortPath();
-					_unit->setCache(0);
-					_parent->getMap()->cacheUnit(_unit);
-					_parent->popState();
 					return;
 				}
 			}
@@ -295,14 +291,14 @@ void UnitWalkBState::think()
 				tu = 0;
 			}
 			int energy = tu;
-			if (_action.run)
-			{
-				tu *= 0.75;
-				energy *= 1.5;
-			}
 			if (dir >= Pathfinding::DIR_UP)
 			{
 				energy = 0;
+			}
+			else if (_action.run)
+			{
+				tu *= 0.75;
+				energy *= 1.5;
 			}
 			if (tu > _unit->getTimeUnits())
 			{
@@ -417,9 +413,13 @@ void UnitWalkBState::think()
 					// This is where we fake out the strafe movement direction so the unit "moonwalks"
 					int dirTemp = _unit->getDirection();
 					_unit->setDirection(_unit->getFaceDirection());
+					_parent->getMap()->cacheUnit(_unit);
 					_unit->setDirection(dirTemp);
 				}
-				_parent->getMap()->cacheUnit(_unit);
+				else
+				{
+					_parent->getMap()->cacheUnit(_unit);
+				}
 			}
 		}
 		else
@@ -589,7 +589,7 @@ void UnitWalkBState::playMovementSound()
 				}
 			}
 		}
-		else
+		else if (_unit->getMovementType() == MT_FLY)
 		{
 			// play default flying sound
 			if (_unit->getWalkingPhase() == 1 && !_falling)

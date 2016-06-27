@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -156,7 +156,7 @@ bool Music::isPlaying()
 #ifndef __NO_MUSIC
 	if (!Options::mute)
 	{
-		return Mix_Playing(-1);
+		return Mix_Playing(-1) != 0;
 	}
 #endif
 	return false;

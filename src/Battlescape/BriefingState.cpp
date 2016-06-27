@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -56,7 +56,7 @@ BriefingState::BriefingState(Craft *craft, Base *base)
 	_txtTitle = new Text(300, 32, 16, 24);
 	_txtTarget = new Text(300, 17, 16, 40);
 	_txtCraft = new Text(300, 17, 16, 56);
-	_txtBriefing = new Text(274, 64, 16, 72);
+	_txtBriefing = new Text(274, 94, 16, 72);
 
 	std::string mission = _game->getSavedGame()->getSavedBattle()->getMissionType();
 	AlienDeployment *deployment = _game->getMod()->getDeployment(mission);
@@ -195,7 +195,7 @@ void BriefingState::btnOkClick(Action *)
 	{
 		Options::baseXResolution = Options::baseXGeoscape;
 		Options::baseYResolution = Options::baseYGeoscape;
-		_game->getScreen()->resetDisplay(false);;
+		_game->getScreen()->resetDisplay(false);
 		delete bs;
 		_game->pushState(new AliensCrashState);
 	}

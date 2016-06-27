@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -53,7 +53,7 @@ MonthlyCostsState::MonthlyCostsState(Base *base) : _base(base)
 	_txtIncome = new Text(150, 9, 10, 146);
 	_txtMaintenance = new Text(150, 9, 10, 154);
 	_lstCrafts = new TextList(288, 32, 10, 48);
-	_lstSalaries = new TextList(300, 40, 10, 88);
+	_lstSalaries = new TextList(288, 40, 10, 88);
 	_lstMaintenance = new TextList(300, 9, 10, 128);
 	_lstTotal = new TextList(100, 9, 205, 150);
 
@@ -107,7 +107,7 @@ MonthlyCostsState::MonthlyCostsState(Base *base) : _base(base)
 	ss2 << tr("STR_MAINTENANCE") << L"=" << Text::formatFunding(_game->getSavedGame()->getBaseMaintenance());
 	_txtMaintenance->setText(ss2.str());
 
-	_lstCrafts->setColumns(4, 125, 70, 44, 60);
+	_lstCrafts->setColumns(4, 125, 70, 44, 50);
 	_lstCrafts->setDot(true);
 
 	const std::vector<std::string> &crafts = _game->getMod()->getCraftsList();
@@ -122,22 +122,25 @@ MonthlyCostsState::MonthlyCostsState(Base *base) : _base(base)
 		}
 	}
 
-	_lstSalaries->setColumns(4, 125, 70, 44, 60);
+	_lstSalaries->setColumns(4, 125, 70, 44, 50);
 	_lstSalaries->setDot(true);
 
 	const std::vector<std::string> &soldiers = _game->getMod()->getSoldiersList();
 	for (std::vector<std::string>::const_iterator i = soldiers.begin(); i != soldiers.end(); ++i)
 	{
 		RuleSoldier *soldier = _game->getMod()->getSoldier(*i);
-		std::wostringstream ss4;
-		ss4 << _base->getSoldierCount(*i);
-		std::string name = (*i);
-		if (soldiers.size() == 1)
+		if (soldier->getBuyCost() != 0 && _game->getSavedGame()->isResearched(soldier->getRequirements()))
 		{
-			name = "STR_SOLDIERS";
+			std::wostringstream ss4;
+			ss4 << _base->getSoldierCount(*i);
+			std::string name = (*i);
+			if (soldiers.size() == 1)
+			{
+				name = "STR_SOLDIERS";
+			}
+			_lstSalaries->addRow(4, tr(name).c_str(), Text::formatFunding(soldier->getSalaryCost()).c_str(), ss4.str().c_str(), Text::formatFunding(_base->getSoldierCount(*i) * soldier->getSalaryCost()).c_str());
 		}
-		_lstSalaries->addRow(4, tr(name).c_str(), Text::formatFunding(soldier->getSalaryCost()).c_str(), ss4.str().c_str(), Text::formatFunding(_base->getSoldierCount(*i) * soldier->getSalaryCost()).c_str());
-	}	
+	}
 	std::wostringstream ss5;
 	ss5 << _base->getTotalEngineers();
 	_lstSalaries->addRow(4, tr("STR_ENGINEERS").c_str(), Text::formatFunding(_game->getMod()->getEngineerCost()).c_str(), ss5.str().c_str(), Text::formatFunding(_base->getTotalEngineers() * _game->getMod()->getEngineerCost()).c_str());

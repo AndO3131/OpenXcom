@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -19,7 +19,6 @@
 
 #include "UfopaediaStartState.h"
 #include "UfopaediaSelectState.h"
-#include "Ufopaedia.h"
 #include "../Engine/Game.h"
 #include "../Engine/Action.h"
 #include "../Engine/Options.h"
@@ -28,10 +27,9 @@
 #include "../Interface/Text.h"
 #include "../Interface/TextButton.h"
 #include "../Mod/Mod.h"
-#include "../Mod/ArticleDefinition.h"
 
 namespace OpenXcom
-{	
+{
 	UfopaediaStartState::UfopaediaStartState()
 	{
 		_screen = false;

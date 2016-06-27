@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_MAP_H
-#define OPENXCOM_MAP_H
-
 #include "../Engine/InteractiveSurface.h"
 #include "../Engine/Options.h"
 #include "Position.h"
@@ -71,7 +69,7 @@ private:
 	SurfaceSet *_projectileSet;
 
 	void drawTerrain(Surface *surface);
-	int getTerrainLevel(Position pos, int size);
+	int getTerrainLevel(Position pos, int size) const;
 	int _iconHeight, _iconWidth, _messageColor;
 	const std::vector<Uint8> *_transparencies;
 public:
@@ -138,21 +136,19 @@ public:
 	/// Special handling for updating map width.
 	void setWidth(int width);
 	/// Get the vertical position of the hidden movement screen.
-	int getMessageY();
+	int getMessageY() const;
 	/// Get the icon height.
-	int getIconHeight();
+	int getIconHeight() const;
 	/// Get the icon width.
-	int getIconWidth();
+	int getIconWidth() const;
 	/// Convert a map position to a sound angle.
-	int getSoundAngle(Position pos);
+	int getSoundAngle(Position pos) const;
 	/// Reset the camera smoothing bool.
 	void resetCameraSmoothing();
 	/// Set whether the screen should "flash" or not.
 	void setBlastFlash(bool flash);
 	/// Check if the screen is flashing this.
-	bool getBlastFlash();
+	bool getBlastFlash() const;
 };
 
 }
-
-#endif

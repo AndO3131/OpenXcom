@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_COUNTRY_H
-#define OPENXCOM_COUNTRY_H
-
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
@@ -55,7 +53,7 @@ public:
 	/// Sets the country's funding.
 	void setFunding(int funding);
 	/// get the country's satisfaction level
-	int getSatisfaction();
+	int getSatisfaction() const;
 	/// add xcom activity in this country
 	void addActivityXcom(int activity);
 	/// add alien activity in this country
@@ -65,7 +63,7 @@ public:
 	/// get xcom activity to this country
 	std::vector<int> &getActivityAlien();
 	/// store last month's counters, start new counters, set this month's change.
-	void newMonth(int xcomTotal, int alienTotal);
+	void newMonth(int xcomTotal, int alienTotal, int pactScore);
 	/// are we signing a new pact?
 	bool getNewPact() const;
 	/// sign a pact at the end of this month.
@@ -77,5 +75,3 @@ public:
 };
 
 }
-
-#endif

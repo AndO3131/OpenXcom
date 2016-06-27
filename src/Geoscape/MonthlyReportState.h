@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,10 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_MONTHLYREPORTSTATE_H
-#define OPENXCOM_MONTHLYREPORTSTATE_H
-
 #include "../Engine/State.h"
+#include <vector>
 #include <string>
 
 namespace OpenXcom
@@ -48,7 +47,6 @@ private:
 	int _ratingTotal, _fundingDiff, _lastMonthsRating;
 	std::vector<std::string> _happyList, _sadList, _pactList;
 	Globe *_globe;
-	Base *_base;
 	std::vector<Soldier*> _soldiersMedalled;
 	/// Builds a country list string.
 	std::wstring countryList(const std::vector<std::string> &countries, const std::string &singular, const std::string &plural);
@@ -57,6 +55,8 @@ public:
 	MonthlyReportState(bool psi, Globe *globe);
 	/// Cleans up the Monthly Report state.
 	~MonthlyReportState();
+	/// Updates the ending.
+	void init();
 	/// Handler for clicking the OK button.
 	void btnOkClick(Action *action);
 	/// Calculate monthly scores.
@@ -64,5 +64,3 @@ public:
 };
 
 }
-
-#endif

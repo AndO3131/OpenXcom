@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_RULETERRAIN_H
-#define OPENXCOM_RULETERRAIN_H
-
 #include <vector>
 #include <string>
 #include <yaml-cpp/yaml.h>
@@ -73,12 +71,10 @@ public:
 	/// Gets the ambient sound effect.
 	int getAmbience() const;
 	/// Gets the generation script name.
-	std::string getScript();
+	std::string getScript() const;
 	/// Gets the list of music to pick from.
-	const std::vector<std::string> &getMusic();
+	const std::vector<std::string> &getMusic() const;
 	double getAmbientVolume() const;
 };
 
 }
-
-#endif

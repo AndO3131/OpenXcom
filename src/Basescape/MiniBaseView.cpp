@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -159,7 +159,6 @@ void MiniBaseView::mouseOver(Action *action, State *state)
 	InteractiveSurface::mouseOver(action, state);
 }
 
-
 void MiniBaseView::setColor(Uint8 color)
 {
 	_green = color;
@@ -168,4 +167,5 @@ void MiniBaseView::setSecondaryColor(Uint8 color)
 {
 	_red = color;
 }
+
 }

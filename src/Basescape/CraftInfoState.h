@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_CRAFTINFOSTATE_H
-#define OPENXCOM_CRAFTINFOSTATE_H
-
 #include "../Engine/State.h"
 
 namespace OpenXcom
@@ -42,7 +40,6 @@ private:
 	Base *_base;
 	size_t _craftId;
 	Craft *_craft;
-	std::wstring _defaultName;
 
 	TextButton *_btnOk, *_btnW1, *_btnW2, *_btnCrew, *_btnEquip, *_btnArmor;
 	Window *_window;
@@ -76,5 +73,3 @@ public:
 };
 
 }
-
-#endif

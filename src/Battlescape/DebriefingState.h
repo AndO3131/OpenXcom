@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_DEBRIEFINGSTATE_H
-#define OPENXCOM_DEBRIEFINGSTATE_H
-
 #include "../Engine/State.h"
 #include <string>
 #include <vector>
@@ -63,7 +61,7 @@ private:
 	TextList *_lstStats, *_lstRecovery, *_lstTotal;
 	std::vector<ReequipStat> _missingItems;
 	std::map<RuleItem*, int> _rounds;
-	std::map<int, RecoveryItem*> _recoveryStats;    
+	std::map<int, RecoveryItem*> _recoveryStats;
 	bool _positiveScore, _noContainment, _manageContainment, _destroyBase;
 	int _limitsEnforced;
 	MissionStatistics *_missionStatistics;
@@ -89,5 +87,3 @@ public:
 };
 
 }
-
-#endif

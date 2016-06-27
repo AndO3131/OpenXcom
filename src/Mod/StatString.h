@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_STATSTRING_H
-#define OPENXCOM_STATSTRING_H
-
 #include <yaml-cpp/yaml.h>
 #include "Unit.h"
 #include "StatStringCondition.h"
@@ -41,24 +39,24 @@ order in which they are specified.  The format of these StatStrings is:
   string statid:[lower]-[upper] [statid:[lower]-[upper] [...] ]
  
   where string = string to add to name.  If length == 1, then the strings
-                 accumulate.  Otherwise, success ends the search.  All
-                 single character strings SHOULD come last, but that is
-                 not required. / and ; are not a valid strings.  The maximum
-                 string length is 19.
-        statid = a = armor (front)
-                 b = bravery
-                 d = time units (dexterity)
-                 e = stamina (endurance)
-                 f = firing accuracy
-                 h = health
-                 k = psi/mc skill
-                 p = psi/mc strength (if skill > 0)
-                 q = psi/mc strength (regardless of skill)
-                 r = reactions
-                 s = strength
-                 t = throwing accuracy
-         lower = lower limit of stat (inclusive), defaults to 0
-         upper = upper limit of stat (inclusive), defaults to 255
+				 accumulate.  Otherwise, success ends the search.  All
+				 single character strings SHOULD come last, but that is
+				 not required. / and ; are not a valid strings.  The maximum
+				 string length is 19.
+		statid = a = armor (front)
+				 b = bravery
+				 d = time units (dexterity)
+				 e = stamina (endurance)
+				 f = firing accuracy
+				 h = health
+				 k = psi/mc skill
+				 p = psi/mc strength (if skill > 0)
+				 q = psi/mc strength (regardless of skill)
+				 r = reactions
+				 s = strength
+				 t = throwing accuracy
+		 lower = lower limit of stat (inclusive), defaults to 0
+		 upper = upper limit of stat (inclusive), defaults to 255
  
 Stat ranges are ANDed together when testing for success.  To achieve a logical
 OR, list the same string more than once.  For example, Wimp b:0-10 and
@@ -108,8 +106,8 @@ class StatString
 {
 private:
 	std::string _stringToBeAddedIfAllConditionsAreMet;
-	std::vector< StatStringCondition* > _conditions;
-	StatStringCondition *getCondition(const std::string &conditionName, const YAML::Node &node) const;
+	std::vector<StatStringCondition*> _conditions;
+	static StatStringCondition *getCondition(const std::string &conditionName, const YAML::Node &node);
 public:
 	/// Creates a blank StatString ruleset.
 	StatString();
@@ -117,15 +115,14 @@ public:
 	virtual ~StatString();
 	/// Loads the StatString from YAML.
 	void load(const YAML::Node& node);
- 	/// Get the conditions for this StatString.
-	std::vector< StatStringCondition* > getConditions() const;
+	/// Get the conditions for this StatString.
+	const std::vector<StatStringCondition*> &getConditions() const;
 	/// Get the StatString string.
 	std::string getString() const;
 	/// Calculate a StatString.
-	static std::wstring calcStatString(UnitStats &currentStats, const std::vector<StatString *> &statStrings, bool psiStrengthEval);
+	static std::wstring calcStatString(UnitStats &currentStats, const std::vector<StatString*> &statStrings, bool psiStrengthEval, bool inTraining);
 	/// Get the CurrentStats.
 	static std::map<std::string, int> getCurrentStats(UnitStats &currentStats);
 };
 
 }
-#endif

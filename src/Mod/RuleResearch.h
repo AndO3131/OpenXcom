@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_RULERESEARCH_H
-#define OPENXCOM_RULERESEARCH_H
-
 #include <string>
 #include <vector>
 #include <yaml-cpp/yaml.h>
@@ -43,7 +41,7 @@ class RuleResearch
 	std::string _name, _lookup, _cutscene;
 	int _cost, _points;
 	std::vector<std::string> _dependencies, _unlocks, _getOneFree, _requires;
-	bool _needItem;
+	bool _needItem, _destroyItem;
 	int _listOrder;
 public:
 	RuleResearch(const std::string & name);
@@ -57,6 +55,8 @@ public:
 	const std::vector<std::string> & getDependencies() const;
 	/// Checks if this ResearchProject needs a corresponding Item to be researched.
 	bool needItem() const;
+	/// Checks if this ResearchProject consumes the corresponding Item when research completes.
+	bool destroyItem() const;
 	/// Gets the list of ResearchProjects unlocked by this research.
 	const std::vector<std::string> & getUnlocked() const;
 	/// Gets the points earned for discovering this ResearchProject.
@@ -73,5 +73,3 @@ public:
 	const std::string & getCutscene() const;
 };
 }
-
-#endif

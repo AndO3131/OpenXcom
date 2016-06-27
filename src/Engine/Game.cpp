@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -17,6 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Game.h"
+#include <algorithm>
 #include <cmath>
 #include <sstream>
 #include <SDL_mixer.h>
@@ -230,7 +231,6 @@ void Game::run()
 					_screen->handle(&action);
 					_cursor->handle(&action);
 					_fpsCounter->handle(&action);
-					_states.back()->handle(&action);
 					if (action.getDetails()->type == SDL_KEYDOWN)
 					{
 						// "ctrl-g" grab input
@@ -253,6 +253,7 @@ void Game::run()
 							}
 						}
 					}
+					_states.back()->handle(&action);
 					break;
 			}
 		}
@@ -454,8 +455,15 @@ void Game::loadLanguage(const std::string &filename)
 {
 	std::ostringstream ss;
 	ss << "/Language/" << filename << ".yml";
-
-	_lang->load(CrossPlatform::searchDataFile("common" + ss.str()));
+	std::string path = CrossPlatform::searchDataFile("common" + ss.str());
+	try
+	{
+		_lang->load(path);
+	}
+	catch (YAML::Exception &e)
+	{
+		throw Exception(path + ": " + std::string(e.what()));
+	}
 
 	for (std::vector< std::pair<std::string, bool> >::const_iterator i = Options::mods.begin(); i != Options::mods.end(); ++i)
 	{
@@ -466,7 +474,7 @@ void Game::loadLanguage(const std::string &filename)
 			std::string file = modInfo.getPath() + ss.str();
 			if (CrossPlatform::fileExists(file))
 			{
-				_lang->load(file);				
+				_lang->load(file);
 			}
 		}
 	}

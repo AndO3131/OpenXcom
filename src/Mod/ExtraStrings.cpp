@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -69,4 +69,5 @@ std::map<std::string, std::string> *ExtraStrings::getStrings()
 {
 	return &_strings;
 }
+
 }

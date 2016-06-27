@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_SURFACE_H
-#define OPENXCOM_SURFACE_H
-
 #include <SDL.h>
 #include <string>
 #include <vector>
@@ -70,6 +68,8 @@ public:
 	void clear(Uint32 color = 0);
 	/// Offsets the surface's colors by a set amount.
 	void offset(int off, int min = -1, int max = -1, int mul = 1);
+	/// Offsets the surface's colors in a color block.
+	void offsetBlock(int off, int blk = 16, int mul = 1);
 	/// Inverts the surface's colors.
 	void invert(Uint8 mid);
 	/// Runs surface functionality every cycle
@@ -82,8 +82,8 @@ public:
 	virtual void initText(Font *, Font *, Language *) {};
 	/// Copies a portion of another surface into this one.
 	void copy(Surface *surface);
-    /// Draws a filled rectangle on the surface.
-    void drawRect(SDL_Rect *rect, Uint8 color);
+	/// Draws a filled rectangle on the surface.
+	void drawRect(SDL_Rect *rect, Uint8 color);
 	/// Draws a filled rectangle on the surface.
 	void drawRect(Sint16 x, Sint16 y, Sint16 w, Sint16 h, Uint8 color);
     /// Draws a line on the surface.
@@ -228,16 +228,19 @@ public:
 	std::string getTooltip() const;
 	/// Sets the tooltip of the surface.
 	void setTooltip(const std::string &tooltip);
+
 	/// Sets the color of the surface.
 	virtual void setColor(Uint8 /*color*/) { /* empty by design */ };
 	/// Sets the secondary color of the surface.
 	virtual void setSecondaryColor(Uint8 /*color*/) { /* empty by design */ };
 	/// Sets the border colour of the surface.
 	virtual void setBorderColor(Uint8 /*color*/) { /* empty by design */ };
+	/// Sets the high contrast color setting of the surface.
+	virtual void setHighContrast(bool /*contrast*/) { /* empty by design */ };
 	/// Sets this button to use a colour lookup table instead of inversion for its alternate form.
-	virtual void setTFTDMode(bool mode);
+	void setTFTDMode(bool mode);
 	/// checks if this is a TFTD mode surface.
-	bool isTFTDMode();
+	bool isTFTDMode() const;
 	/// Sets the see depth mode of surface.
 	void setSeeDepth(int d);
 	/// Gets the see depth mode of surface.
@@ -245,5 +248,3 @@ public:
 };
 
 }
-
-#endif

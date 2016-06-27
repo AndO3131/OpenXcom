@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,10 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_FONT_H
-#define OPENXCOM_FONT_H
-
 #include <map>
+#include <vector>
+#include <utility>
 #include <string>
 #include <SDL.h>
 #include <yaml-cpp/yaml.h>
@@ -30,22 +30,26 @@ namespace OpenXcom
 class Surface;
 class Palette;
 
+struct FontImage
+{
+	int width, height, spacing;
+	Surface *surface;
+};
+
 /**
  * Takes care of loading and storing each character in a sprite font.
- * Sprite fonts consist of a set of fixed-size characters all lined up
- * in one column in a surface.
+ * Sprite fonts consist of a set of characters split in fixed-size regions.
  * @note The characters don't all need to be the same size, they can
  * have blank space and will be automatically lined up properly.
  */
 class Font
 {
 private:
-	static std::wstring _index;
-	static SDL_Color _palette[6];
-	Surface *_surface;
-	int _width, _height, _spacing;
-	std::map<wchar_t, SDL_Rect> _chars;
+	std::vector<FontImage> _images;
+	std::map< wchar_t, std::pair<size_t, SDL_Rect> > _chars;
 	bool _monospace;
+	/// Determines the size and position of each character in the font.
+	void init(size_t index, const std::wstring &str);
 public:
 	/// Creates a blank font.
 	Font();
@@ -59,14 +63,10 @@ public:
 	static inline bool isSeparator(wchar_t c) { return (c == L'-' || c == '/'); }
 	/// Checks if a character is a non-breaking space.
 	static inline bool isNonBreakableSpace(wchar_t c) { return (c == L'\xA0'); }
-	/// Sets the character index for every font.
-	static void setIndex(const std::wstring &index);
 	/// Loads the font from YAML.
 	void load(const YAML::Node& node);
 	/// Generate the terminal font.
 	void loadTerminal();
-	/// Determines the size and position of each character in the font.
-	void init();
 	/// Gets a particular character from the font, with its real size.
 	Surface *getChar(wchar_t c);
 	/// Gets the font's character width.
@@ -77,12 +77,10 @@ public:
 	int getSpacing() const;
 	/// Gets the size of a particular character;
 	SDL_Rect getCharSize(wchar_t c);
-	/// Gets the font's surface.
-	Surface *getSurface() const;
-
-	void fix(const std::string &file, int width);
+	/// Gets the font's palette.
+	SDL_Color *getPalette() const;
+	/// Sets the font's palette.
+	void setPalette(SDL_Color *colors, int firstcolor, int ncolors);
 };
 
 }
-
-#endif

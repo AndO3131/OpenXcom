@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2015 OpenXcom Developers.
+* Copyright 2010-2016 OpenXcom Developers.
 *
 * This file is part of OpenXcom.
 *
@@ -16,9 +16,6 @@
 * You should have received a copy of the GNU General Public License
 * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OPENXCOM_MISSIONSTATISTICS_H
-#define OPENXCOM_MISSIONSTATISTICS_H
-
 #include <yaml-cpp/yaml.h>
 #include <map>
 #include <string>
@@ -113,11 +110,11 @@ struct MissionStatistics
 		std::wostringstream ss;
 		if (success)
 		{
-			ss << lang->getString("STR_MISSION_WIN");
+			ss << lang->getString("STR_VICTORY");
 		}
 		else
 		{
-			ss << lang->getString("STR_MISSION_LOSS");
+			ss << lang->getString("STR_DEFEAT");
 		}
 		ss << L" - " << lang->getString(rating);
 		return ss.str();
@@ -147,11 +144,36 @@ struct MissionStatistics
 		}
 	}
 
+	bool isAlienBase() const
+	{
+		if (type.find("STR_ALIEN_BASE") != std::string::npos || type.find("STR_ALIEN_COLONY") != std::string::npos)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	bool isBaseDefense() const
+	{
+		if (type == "STR_BASE_DEFENSE")
+		{
+			return true;
+		}
+		return false;
+	}
+
+	bool isUfoMission() const
+	{
+		if(ufo != "NO_UFO")
+		{
+			return true;
+		}
+		return false;
+	}
+
 	MissionStatistics(const YAML::Node& node) : time(0, 0, 0, 0, 0, 0, 0) { load(node); }
 	MissionStatistics() : id(0), markerId(0), time(0, 0, 0, 0, 0, 0, 0), region("STR_REGION_UNKNOWN"), country("STR_UNKNOWN"), ufo("NO_UFO"), success(false), score(0), alienRace("STR_UNKNOWN"), daylight(0), valiantCrux(false), lootValue(0) { }
 	~MissionStatistics() { }
 };
 
 }
-
-#endif

@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_TARGETINFOSTATE_H
-#define OPENXCOM_TARGETINFOSTATE_H
-
 #include "../Engine/State.h"
 
 namespace OpenXcom
@@ -27,6 +25,7 @@ namespace OpenXcom
 class TextButton;
 class Window;
 class Text;
+class TextEdit;
 class Target;
 class Globe;
 
@@ -42,7 +41,8 @@ private:
 
 	TextButton *_btnIntercept, *_btnOk;
 	Window *_window;
-	Text *_txtTitle, *_txtTargetted, *_txtFollowers;
+	TextEdit *_edtTitle;
+	Text *_txtTargetted, *_txtFollowers;
 public:
 	/// Creates the Target Info state.
 	TargetInfoState(Target *target, Globe *globe);
@@ -52,8 +52,8 @@ public:
 	void btnInterceptClick(Action *action);
 	/// Handler for clicking the OK button.
 	void btnOkClick(Action *action);
+	/// Handler for changing the text on the Name edit.
+	void edtTitleChange(Action *action);
 };
 
 }
-
-#endif

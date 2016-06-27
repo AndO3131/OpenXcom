@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -66,6 +66,10 @@ void SoldierNamePool::load(const std::string &filename)
 	{
 		std::wstring name = Language::utf8ToWstr(i->as<std::string>());
 		_femaleLast.push_back(name);
+	}
+	if (_femaleFirst.empty())
+	{
+		_femaleFirst = _maleFirst;
 	}
 	if (_femaleLast.empty())
 	{

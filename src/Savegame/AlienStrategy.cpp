@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -242,4 +242,5 @@ bool AlienStrategy::validMissionRegion(const std::string &region)
 	std::map<std::string, WeightedOptions*>::iterator i = _regionMissions.find(region);
 	return (i != _regionMissions.end());
 }
+
 }

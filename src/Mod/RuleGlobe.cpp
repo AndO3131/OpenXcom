@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,10 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#define _USE_MATH_DEFINES
 #include "RuleGlobe.h"
 #include <SDL_endian.h>
-#include <cmath>
 #include <fstream>
 #include "../Engine/Exception.h"
 #include "Polygon.h"
@@ -28,6 +26,7 @@
 #include "../Engine/Palette.h"
 #include "../Geoscape/Globe.h"
 #include "../Engine/FileMap.h"
+#include "../fmath.h"
 
 namespace OpenXcom
 {
@@ -101,19 +100,32 @@ void RuleGlobe::load(const YAML::Node &node)
 			_polylines.push_back(polyline);
 		}
 	}
-	if (node["textures"])
+	for (YAML::const_iterator i = node["textures"].begin(); i != node["textures"].end(); ++i)
 	{
-		for (std::map<int, Texture*>::iterator i = _textures.begin(); i != _textures.end(); ++i)
-		{
-			delete i->second;
-		}
-		_textures.clear();
-		for (YAML::const_iterator i = node["textures"].begin(); i != node["textures"].end(); ++i)
+		if ((*i)["id"])
 		{
 			int id = (*i)["id"].as<int>();
-			Texture *texture = new Texture(id);
+			std::map<int, Texture*>::const_iterator j = _textures.find(id);
+			Texture *texture;
+			if (j != _textures.end())
+			{
+				texture = j->second;
+			}
+			else
+			{
+				texture = new Texture(id);
+				_textures[id] = texture;
+			}
 			texture->load(*i);
-			_textures[id] = texture;
+		}
+		else if ((*i)["delete"])
+		{
+			int id = (*i)["delete"].as<int>();
+			std::map<int, Texture*>::iterator j = _textures.find(id);
+			if (j != _textures.end())
+			{
+				_textures.erase(j);
+			}
 		}
 	}
 	Globe::COUNTRY_LABEL_COLOR = node["countryColor"].as<int>(Globe::COUNTRY_LABEL_COLOR);

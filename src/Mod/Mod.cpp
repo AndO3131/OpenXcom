@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -367,14 +367,42 @@ Mod::~Mod()
 }
 
 /**
+ * Gets a specific rule element by ID.
+ * @param id String ID of the rule element.
+ * @param name Human-readable name of the rule type.
+ * @param map Map associated to the rule type.
+ * @return Pointer to the rule element, or NULL if not found.
+ */
+template <typename T>
+T *Mod::getRule(const std::string &id, const std::string &name, const std::map<std::string, T*> &map) const
+{
+	if (id.empty())
+	{
+		return 0;
+	}
+	typename std::map<std::string, T*>::const_iterator i = map.find(id);
+	if (map.end() != i)
+	{
+		return i->second;
+	}
+	else
+	{
+//		if (id != Armor::NONE)
+//		{
+//			Log(LOG_WARNING) << name << " " << id << " not found";
+//		}
+		return 0;
+	}
+}
+
+/**
  * Returns a specific font from the mod.
  * @param name Name of the font.
  * @return Pointer to the font.
  */
 Font *Mod::getFont(const std::string &name) const
 {
-	std::map<std::string, Font*>::const_iterator i = _fonts.find(name);
-	if (_fonts.end() != i) return i->second; else return 0;
+	return getRule(name, "Font", _fonts);
 }
 
 /**
@@ -384,8 +412,7 @@ Font *Mod::getFont(const std::string &name) const
  */
 Surface *Mod::getSurface(const std::string &name) const
 {
-	std::map<std::string, Surface*>::const_iterator i = _surfaces.find(name);
-	if (_surfaces.end() != i) return i->second; else return 0;
+	return getRule(name, "Surface", _surfaces);
 }
 
 /**
@@ -530,7 +557,7 @@ void Mod::setPalette(SDL_Color *colors, int firstcolor, int ncolors)
 {
 	for (std::map<std::string, Font*>::iterator i = _fonts.begin(); i != _fonts.end(); ++i)
 	{
-		i->second->getSurface()->setPalette(colors, firstcolor, ncolors);
+		i->second->setPalette(colors, firstcolor, ncolors);
 	}
 	for (std::map<std::string, Surface*>::iterator i = _surfaces.begin(); i != _surfaces.end(); ++i)
 	{
@@ -1217,7 +1244,7 @@ void Mod::loadFile(const std::string &filename)
  * @return Pointer to new rule if one was created, or NULL if one was removed.
  */
 template <typename T>
-T *Mod::loadRule(const YAML::Node &node, std::map<std::string, T*> *map, std::vector<std::string> *index, const std::string &key)
+T *Mod::loadRule(const YAML::Node &node, std::map<std::string, T*> *map, std::vector<std::string> *index, const std::string &key) const
 {
 	T *rule = 0;
 	if (node[key])
@@ -2150,6 +2177,15 @@ RuleInterface *Mod::getInterface(const std::string &id) const
 }
 
 /**
+* Gets the rules for the Save Converter.
+* @return Pointer to converter rules.
+*/
+RuleConverter *Mod::getConverter() const
+{
+	return _converter;
+}
+
+/**
  * Gets the rules for the Geoscape globe.
  * @return Pointer to globe rules.
  */
@@ -2174,9 +2210,14 @@ const std::vector<MapScript*> *Mod::getMapScript(std::string id) const
 	if (_mapScripts.end() != i) return &i->second; else return 0;
 }
 
-const std::map<std::string, RuleVideo *> *Mod::getVideos() const
+/**
+ * Returns the data for the specified video cutscene.
+ * @param id Video id.
+ * @return A pointer to the data for the specified video.
+ */
+RuleVideo *Mod::getVideo(const std::string &id) const
 {
-	return &_videos;
+	return getRule(id, "Video", _videos);
 }
 
 const std::map<std::string, RuleMusic *> *Mod::getMusic() const
@@ -2811,8 +2852,7 @@ void Mod::loadExtraResources()
 {
 	// Load fonts
 	YAML::Node doc = YAML::LoadFile(FileMap::getFilePath("Language/" + _fontName));
-	Log(LOG_INFO) << "Loading font... " << _fontName;
-	Font::setIndex(Language::utf8ToWstr(doc["chars"].as<std::string>()));
+	Log(LOG_INFO) << "Loading fonts... " << _fontName;
 	for (YAML::const_iterator i = doc["fonts"].begin(); i != doc["fonts"].end(); ++i)
 	{
 		std::string id = (*i)["id"].as<std::string>();
@@ -3344,6 +3384,26 @@ StatAdjustment *Mod::getStatAdjustment(int difficulty)
 		return &_statAdjustment[4];
 	}
 	return &_statAdjustment[difficulty];
+}
+
+/**
+ * Returns the minimum amount of score the player can have,
+ * otherwise they are defeated. Changes based on difficulty.
+ * @return Score.
+ */
+int Mod::getDefeatScore() const
+{
+	return _defeatScore;
+}
+
+/**
+ * Returns the minimum amount of funds the player can have,
+ * otherwise they are defeated.
+ * @return Funds.
+ */
+int Mod::getDefeatFunds() const
+{
+	return _defeatFunds;
 }
 
 }

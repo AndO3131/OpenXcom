@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,18 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 #include "CrossPlatform.h"
+#include <exception>
 #include <algorithm>
 #include <sstream>
-#include <fstream>
 #include <string>
 #include <locale>
 #include <stdint.h>
+#include <time.h>
 #include <sys/stat.h>
 #include "../dirent.h"
 #include "Logger.h"
 #include "Exception.h"
 #include "Options.h"
+#include "Language.h"
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -36,18 +41,20 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <shlwapi.h>
-#include <direct.h>
+#include <dbghelp.h>
 #ifndef SHGFP_TYPE_CURRENT
 #define SHGFP_TYPE_CURRENT 0
 #endif
+#define EXCEPTION_CODE_CXX 0xe06d7363
 #ifndef __GNUC__
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "dbghelp.lib")
 #endif
 #else
-#include "Language.h"
 #include <iostream>
+#include <fstream>
 #include <SDL_image.h>
 #include <cstring>
 #include <cstdio>
@@ -56,20 +63,45 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <execinfo.h>
 #endif
 #include <SDL.h>
 #include <SDL_syswm.h>
+#ifdef __HAIKU__
+#include <FindDirectory.h>
+#include <StorageDefs.h>
+#endif
 
 namespace OpenXcom
 {
 namespace CrossPlatform
 {
-
+	std::string errorDlg;
 #ifdef _WIN32
 	const char PATH_SEPARATOR = '\\';
 #else
 	const char PATH_SEPARATOR = '/';
 #endif
+
+/**
+ * Determines the available Linux error dialogs.
+ */
+void getErrorDialog()
+{
+#ifndef _WIN32
+	if (system(NULL))
+	{
+		if (system("which zenity 2>&1 > /dev/null") == 0)
+			errorDlg = "zenity --error --text=";
+		else if (system("which kdialog 2>&1 > /dev/null") == 0)
+			errorDlg = "kdialog --error ";
+		else if (system("which gdialog 2>&1 > /dev/null") == 0)
+			errorDlg = "gdialog --msgbox ";
+		else if (system("which xdialog 2>&1 > /dev/null") == 0)
+			errorDlg = "xdialog --msgbox ";
+	}
+#endif
+}
 
 /**
  * Displays a message box with an error message.
@@ -80,7 +112,18 @@ void showError(const std::string &error)
 #ifdef _WIN32
 	MessageBoxA(NULL, error.c_str(), "OpenXcom Error", MB_ICONERROR | MB_OK);
 #else
-	std::cerr << error << std::endl;
+	if (errorDlg.empty())
+	{
+		std::cerr << error << std::endl;
+	}
+	else
+	{
+		std::string nError = '"' + error + '"';
+		Language::replace(nError, "\n", "\\n");
+		std::string cmd = errorDlg + nError;
+		if (system(cmd.c_str()) != 0)
+			std::cerr << error << std::endl;
+	}
 #endif
 	Log(LOG_FATAL) << error;
 }
@@ -142,7 +185,10 @@ std::vector<std::string> findDataFolders()
 #else
 	char const *home = getHome();
 #ifdef __HAIKU__
-	list.push_back("/boot/apps/OpenXcom/");
+	char data_path[B_PATH_NAME_LENGTH];
+	find_directory(B_SYSTEM_SETTINGS_DIRECTORY, 0, true, data_path, sizeof(data_path)-strlen("/OpenXcom/"));
+	strcat(data_path,"/OpenXcom/");
+	list.push_back(data_path);
 #endif
 	char path[MAXPATHLEN];
 
@@ -234,7 +280,10 @@ std::vector<std::string> findUserFolders()
 	}
 #else
 #ifdef __HAIKU__
-	list.push_back("/boot/apps/OpenXcom/");
+	char user_path[B_PATH_NAME_LENGTH];
+	find_directory(B_USER_SETTINGS_DIRECTORY, 0, true, user_path, sizeof(user_path)-strlen("/OpenXcom/"));
+	strcat(user_path,"/OpenXcom/");
+	list.push_back(user_path);
 #endif
 	char const *home = getHome();
 	char path[MAXPATHLEN];
@@ -278,7 +327,10 @@ std::string findConfigFolder()
 #if defined(_WIN32) || defined(__APPLE__)
 	return "";
 #elif defined (__HAIKU__)
-	return "/boot/home/config/settings/openxcom/";
+	char settings_path[B_PATH_NAME_LENGTH];
+	find_directory(B_USER_SETTINGS_DIRECTORY, 0, true, settings_path, sizeof(settings_path)-strlen("/OpenXcom/"));
+	strcat(settings_path,"/OpenXcom/");
+	return settings_path;
 #else
 	char const *home = getHome();
 	char path[MAXPATHLEN];
@@ -490,7 +542,7 @@ bool fileExists(const std::string &path)
 		return 1;
 	}
 	return 0;
-#else 
+#else
 	struct stat info;
 	return (stat(path.c_str(), &info) == 0 && S_ISREG(info.st_mode));
 #endif
@@ -548,7 +600,7 @@ std::string sanitizeFilename(const std::string &filename)
 		if ((*i) == '<' ||
 			(*i) == '>' ||
 			(*i) == ':' ||
-			(*i) == '"' || 
+			(*i) == '"' ||
 			(*i) == '/' ||
 			(*i) == '?' ||
 			(*i) == '\\')
@@ -591,7 +643,15 @@ std::string getLocale()
 	return Language::wstrToUtf8(locale);
 	*/
 #else
-	std::locale l("");
+	std::locale l;
+	try
+	{
+		l = std::locale("");
+	}
+	catch (std::runtime_error)
+	{
+		return "x-";
+	}
 	std::string name = l.name();
 	size_t dash = name.find_first_of('_'), dot = name.find_first_of('.');
 	if (dot != std::string::npos)
@@ -810,6 +870,13 @@ std::string getDosPath()
 #endif
 }
 
+/**
+ * Sets the window titlebar icon.
+ * For Windows, use the embedded resource icon.
+ * For other systems, use a PNG icon.
+ * @param winResource ID for Windows icon.
+ * @param unixPath Path to PNG icon for Unix.
+ */
 void setWindowIcon(int winResource, const std::string &unixPath)
 {
 #ifdef _WIN32
@@ -836,5 +903,201 @@ void setWindowIcon(int winResource, const std::string &unixPath)
 #endif
 }
 
+/**
+ * Logs the stack back trace leading up to this function call.
+ * @param ex Pointer to stack context (PCONTEXT on Windows), NULL to use current context.
+ */
+void stackTrace(void *ctx)
+{
+#ifdef _WIN32
+	const int MAX_SYMBOL_LENGTH = 1024;
+	CONTEXT context;
+	if (ctx != 0)
+	{
+		context = *((PCONTEXT)ctx);
+	}
+	else
+	{
+#ifdef _MSC_VER
+		memset(&context, 0, sizeof(CONTEXT));
+		context.ContextFlags = CONTEXT_FULL;
+		RtlCaptureContext(&context);
+#else
+		// TODO: Doesn't work on MinGW
+		return;
+#endif
+	}
+	HANDLE thread = GetCurrentThread();
+	HANDLE process = GetCurrentProcess();
+	STACKFRAME64 frame;
+	memset(&frame, 0, sizeof(STACKFRAME64));
+	DWORD image;
+#ifdef _M_IX86
+	image = IMAGE_FILE_MACHINE_I386;
+	frame.AddrPC.Offset = context.Eip;
+	frame.AddrPC.Mode = AddrModeFlat;
+	frame.AddrFrame.Offset = context.Ebp;
+	frame.AddrFrame.Mode = AddrModeFlat;
+	frame.AddrStack.Offset = context.Esp;
+	frame.AddrStack.Mode = AddrModeFlat;
+#elif _M_X64
+	image = IMAGE_FILE_MACHINE_AMD64;
+	frame.AddrPC.Offset = context.Rip;
+	frame.AddrPC.Mode = AddrModeFlat;
+	frame.AddrFrame.Offset = context.Rbp;
+	frame.AddrFrame.Mode = AddrModeFlat;
+	frame.AddrStack.Offset = context.Rsp;
+	frame.AddrStack.Mode = AddrModeFlat;
+#elif _M_IA64
+	image = IMAGE_FILE_MACHINE_IA64;
+	frame.AddrPC.Offset = context.StIIP;
+	frame.AddrPC.Mode = AddrModeFlat;
+	frame.AddrFrame.Offset = context.IntSp;
+	frame.AddrFrame.Mode = AddrModeFlat;
+	frame.AddrBStore.Offset = context.RsBSP;
+	frame.AddrBStore.Mode = AddrModeFlat;
+	frame.AddrStack.Offset = context.IntSp;
+	frame.AddrStack.Mode = AddrModeFlat;
+#else
+	// TODO: Stack trace not supported on this architecture
+	Log(LOG_FATAL) << "Unfortunately, no stack trace information is available";
+	return;
+#endif
+	SYMBOL_INFO *symbol = (SYMBOL_INFO *)malloc(sizeof(SYMBOL_INFO) + (MAX_SYMBOL_LENGTH - 1) * sizeof(TCHAR));
+	symbol->MaxNameLen = MAX_SYMBOL_LENGTH;
+	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+	IMAGEHLP_LINE64 *line = (IMAGEHLP_LINE64 *)malloc(sizeof(IMAGEHLP_LINE64));
+	line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+	DWORD displacement;
+	SymInitialize(process, NULL, TRUE);
+	while (StackWalk64(image, process, thread, &frame, &context, NULL, NULL, NULL, NULL))
+	{
+		if (SymFromAddr(process, frame.AddrPC.Offset, NULL, symbol))
+		{
+			if (SymGetLineFromAddr64(process, frame.AddrPC.Offset, &displacement, line))
+			{
+				std::string filename = line->FileName;
+				size_t n = filename.find_last_of(PATH_SEPARATOR);
+				if (n != std::string::npos)
+				{
+					filename = filename.substr(n + 1);
+				}
+				Log(LOG_FATAL) << "0x" << std::hex << symbol->Address << std::dec << " " << symbol->Name << " (" << filename << ":" << line->LineNumber << ")";
+			}
+			else
+			{
+				Log(LOG_FATAL) << "0x" << std::hex << symbol->Address << std::dec << " " << symbol->Name << " (??: " << GetLastError() << ")";
+			}
+		}
+		else
+		{
+			Log(LOG_FATAL) << "??: " << GetLastError();
+		}
+	}
+	DWORD err = GetLastError();
+	if (err)
+	{
+		Log(LOG_FATAL) << "No stack trace generated: " << err;
+	}
+	SymCleanup(process);
+#else
+	const int MAX_STACK_FRAMES = 16;
+	void *array[MAX_STACK_FRAMES];
+	size_t size = backtrace(array, MAX_STACK_FRAMES);
+	char **strings = backtrace_symbols(array, size);
+
+	for (size_t i = 0; i < size; ++i)
+	{
+		Log(LOG_FATAL) << strings[i];
+	}
+
+	free(strings);
+#endif
 }
+
+/**
+ * Generates a timestamp of the current time.
+ * @return String in D-M-Y_H-M-S format.
+ */
+std::string now()
+{
+	const int MAX_LEN = 25, MAX_RESULT = 80;
+	char result[MAX_RESULT] = { 0 };
+#ifdef _WIN32
+	char date[MAX_LEN], time[MAX_LEN];
+	if (GetDateFormatA(LOCALE_INVARIANT, 0, 0, "dd'-'MM'-'yyyy", date, MAX_LEN) == 0)
+		return "00-00-0000";
+	if (GetTimeFormatA(LOCALE_INVARIANT, TIME_FORCE24HOURFORMAT, 0, "HH'-'mm'-'ss", time, MAX_LEN) == 0)
+		return "00-00-00";
+	sprintf(result, "%s_%s", date, time);
+#else
+	char buffer[MAX_LEN];
+	time_t rawtime;
+	struct tm *timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	strftime(buffer, MAX_LEN, "%d-%m-%Y_%H-%M-%S", timeinfo);
+	sprintf(result, "%s", buffer);
+#endif
+	return result;
+}
+
+/**
+ * Logs the details of this crash and shows an error.
+ * @param ex Pointer to exception data (PEXCEPTION_POINTERS on Windows, signal int on Unix)
+ * @param err Exception message, if any.
+ */
+void crashDump(void *ex, const std::string &err)
+{
+	std::ostringstream error;
+#ifdef _WIN32
+	PEXCEPTION_POINTERS exception = (PEXCEPTION_POINTERS)ex;
+	if (exception->ExceptionRecord->ExceptionCode == EXCEPTION_CODE_CXX)
+	{
+		std::exception *cppException = (std::exception *)exception->ExceptionRecord->ExceptionInformation[1];
+		error << cppException->what();
+	}
+	else
+	{
+		error << "code 0x" << std::hex << exception->ExceptionRecord->ExceptionCode;
+	}
+	Log(LOG_FATAL) << "A fatal error has occurred: " << error.str();
+	stackTrace(exception->ContextRecord);
+	std::string dumpName = Options::getUserFolder();
+	dumpName += now() + ".dmp";
+	HANDLE dumpFile = CreateFileA(dumpName.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	MINIDUMP_EXCEPTION_INFORMATION exceptionInformation;
+	exceptionInformation.ThreadId = GetCurrentThreadId();
+	exceptionInformation.ExceptionPointers = exception;
+	exceptionInformation.ClientPointers = FALSE;
+	if (MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dumpFile, MiniDumpNormal, exception ? &exceptionInformation : NULL, NULL, NULL))
+	{
+		Log(LOG_FATAL) << "Crash dump generated at " << dumpName;
+	}
+	else
+	{
+		Log(LOG_FATAL) << "No crash dump generated: " << GetLastError();
+	}
+#else
+	if (ex == 0)
+	{
+		error << err;
+	}
+	else
+	{
+		int signal = *((int*)ex);
+		error << "signal " << signal;
+	}
+	Log(LOG_FATAL) << "A fatal error has occurred: " << error.str();
+	stackTrace(0);
+#endif
+	std::ostringstream msg;
+	msg << "OpenXcom has crashed: " << error.str() << std::endl;
+	msg << "Extra information has been saved to openxcom.log." << std::endl;
+	msg << "If this error was unexpected, please report it to the developers.";
+	showError(msg.str());
+}
+
+}
+
 }

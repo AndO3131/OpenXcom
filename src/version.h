@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,15 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_VERSION_H
-#define OPENXCOM_VERSION_H
-
 #define OPENXCOM_VERSION_SHORT "1.0"
 #define OPENXCOM_VERSION_LONG "1.0.0.0"
 #define OPENXCOM_VERSION_NUMBER 1,0,0,0
 
-#ifndef OPENXCOM_VERSION_GIT
-#define OPENXCOM_VERSION_GIT ""
+#ifdef GIT_BUILD
+#include "git_version.h"
 #endif
 
+#ifndef OPENXCOM_VERSION_GIT
+#define OPENXCOM_VERSION_GIT " Dev"
 #endif

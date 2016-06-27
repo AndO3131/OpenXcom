@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -420,7 +420,7 @@ int Armor::getRankColor(int i) const
 {
 	if ((size_t)i < _rankColor.size())
 	{
-		return _rankColor[i];
+		return _rankColor[(size_t)i];
 	}
 	else
 	{

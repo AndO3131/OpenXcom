@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,15 +17,22 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_FMATH_H
-#define OPENXCOM_FMATH_H
-
-#include <limits>
+#include <cfloat>
+#define _USE_MATH_DEFINES
 #include <cmath>
 
-template <class _Tx>
-inline bool AreSame(const _Tx& l, const _Tx& r) {
-	return std::fabs(l-r) <= std::numeric_limits<_Tx>::epsilon();
+#ifndef M_PI
+#define M_PI       3.14159265358979323846
+#define M_PI_2     1.57079632679489661923
+#define M_PI_4     0.785398163397448309616
+#endif
+
+inline bool AreSame(const float l, const float r) {
+	return std::fabs(l-r) <= FLT_EPSILON;
+}
+
+inline bool AreSame(const double l, const double r) {
+	return std::fabs(l-r) <= DBL_EPSILON;
 }
 
 template <class _Tx>
@@ -38,5 +46,9 @@ inline _Tx Sqr(const _Tx& x)
 {
 	return x * x;
 }
-#endif
 
+template <class _Tx>
+inline _Tx Sign(const _Tx& x)
+{
+	return (_Tx(0) < x) - (x < _Tx(0));
+}

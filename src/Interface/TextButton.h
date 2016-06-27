@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_TEXTBUTTON_H
-#define OPENXCOM_TEXTBUTTON_H
-
 #include "../Engine/InteractiveSurface.h"
 
 namespace OpenXcom
@@ -45,6 +43,8 @@ private:
 	TextButton **_group;
 	bool _contrast, _geoscapeButton;
 	ComboBox *_comboBox;
+	// for use by RuleInterface
+	void setSecondaryColor(Uint8 color) { setTextColor(color); }
 protected:
 	bool isButtonHandled(Uint8 button = 0);
 public:
@@ -87,10 +87,7 @@ public:
 	void setComboBox(ComboBox *comboBox);
 	void setWidth(int width);
 	void setHeight(int height);
-	void setSecondaryColor(Uint8 color);
 	void setGeoscapeButton(bool geo);
 };
 
 }
-
-#endif

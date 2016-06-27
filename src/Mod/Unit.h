@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_UNIT_H
-#define OPENXCOM_UNIT_H
-
 #include <string>
 #include <vector>
 #include <yaml-cpp/yaml.h>
@@ -71,8 +69,8 @@ private:
 	SpecialAbility _specab;
 	std::string _spawnUnit;
 	bool _livingWeapon;
-	std::string _meleeWeapon;
-	std::vector<std::string> _builtInWeapons;
+	std::string _meleeWeapon, _psiWeapon;
+	std::vector<std::vector<std::string> > _builtInWeapons;
 public:
 	/// Creates a blank unit ruleset.
 	Unit(const std::string &type);
@@ -118,8 +116,10 @@ public:
 	bool isLivingWeapon() const;
 	/// Gets the name of any melee weapon that may be built in to this unit.
 	std::string getMeleeWeapon() const;
+	/// Gets the name of any psi weapon that may be built in to this unit.
+	std::string getPsiWeapon() const;
 	/// Gets a vector of integrated items this unit has available.
-	const std::vector<std::string> &getBuiltInWeapons() const;
+	const std::vector<std::vector<std::string> > &getBuiltInWeapons() const;
 };
 
 }
@@ -166,5 +166,3 @@ namespace YAML
 		}
 	};
 }
-
-#endif

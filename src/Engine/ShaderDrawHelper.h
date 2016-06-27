@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,10 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef OPENXCOM_SHADERDRAWHELPER_H
-#define	OPENXCOM_SHADERDRAWHELPER_H
-
 #include "Surface.h"
 #include "GraphSubset.h"
 #include "Exception.h"
@@ -144,7 +141,17 @@ public:
 	{
 
 	}
-
+	
+	///copy constructor
+	inline ShaderBase(const ShaderBase<Uint8>& s):
+		_orgin(s.ptr()),
+		_range_base(s.getBaseDomain()),
+		_range_domain(s.getDomain()),
+		_pitch(s.pitch())		
+	{
+			
+	}
+	
 	/**
 	 * create surface using openxcom surface `s` as data source.
 	 * surface will have same dimensions as `s`.
@@ -449,6 +456,3 @@ struct controler<ShaderBase<Pixel> > : public controler_base<typename ShaderBase
 }//namespace helper
 
 }//namespace OpenXcom
-
-#endif	/* SHADERDRAWHELPER_H */
-

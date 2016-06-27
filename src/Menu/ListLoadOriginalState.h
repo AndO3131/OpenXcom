@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,11 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_ListLoadOriginalState_H
-#define OPENXCOM_ListLoadOriginalState_H
-
 #include "../Engine/State.h"
 #include "../Savegame/SaveConverter.h"
+#include "OptionsBaseState.h"
 
 namespace OpenXcom
 {
@@ -44,11 +43,14 @@ private:
 	Text *_txtSlotTime[SaveConverter::NUM_SAVES];
 	Text *_txtSlotDate[SaveConverter::NUM_SAVES];
 	SaveOriginal _saves[SaveConverter::NUM_SAVES];
+	OptionsOrigin _origin;
 public:
 	/// Creates the Saved Game state.
-	ListLoadOriginalState();
+	ListLoadOriginalState(OptionsOrigin origin);
 	/// Cleans up the Saved Game state.
 	~ListLoadOriginalState();
+	/// Sets up the saves list.
+	void init();
 	/// Handler for clicking a Save Slot button.
 	void btnSlotClick(Action *action);
 	/// Handler for clicking the OpenXcom button.
@@ -58,5 +60,3 @@ public:
 };
 
 }
-
-#endif

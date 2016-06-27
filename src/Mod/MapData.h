@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_MAPDATA_H
-#define OPENXCOM_MAPDATA_H
-
 #include "RuleItem.h"
 
 namespace OpenXcom
@@ -162,7 +160,7 @@ public:
 	/// Sets the TUSlide value.
 	void setTUSlide(const int TUSlide);
 	/// Check if this is an xcom base object.
-	bool isBaseModule();
+	bool isBaseModule() const;
 	/// Sets this tile as not a floor (water, etc.)
 	void setNoFloor(bool isNoFloor);
 	/// Sets this tile as not stopping LOS.
@@ -170,5 +168,3 @@ public:
 };
 
 }
-
-#endif

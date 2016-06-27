@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_MISSIONSITE_H
-#define OPENXCOM_MISSIONSITE_H
-
 #include "Target.h"
 #include <string>
 #include <yaml-cpp/yaml.h>
@@ -60,8 +58,8 @@ public:
 	int getId() const;
 	/// Sets the mission site's ID.
 	void setId(int id);
-	/// Gets the mission site's name.
-	std::wstring getName(Language *lang) const;
+	/// Gets the mission site's default name.
+	std::wstring getDefaultName(Language *lang) const;
 	/// Gets the mission site's marker.
 	int getMarker() const;
 	/// Gets the seconds until this mission site expires.
@@ -85,11 +83,9 @@ public:
 	/// Sets the mission site's city.
 	void setCity(const std::string &city);
 	/// Gets the mission site's detection state.
-	bool getDetected();
+	bool getDetected() const;
 	/// Sets the mission site's detection state.
 	void setDetected(bool detected);
 };
 
 }
-
-#endif

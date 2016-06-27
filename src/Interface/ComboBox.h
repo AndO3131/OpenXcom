@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_COMBOBOX_H
-#define OPENXCOM_COMBOBOX_H
-
 #include "../Engine/InteractiveSurface.h"
 #include <vector>
 #include <string>
@@ -93,7 +91,7 @@ public:
 	/// Sets the list of options.
 	void setOptions(const std::vector<std::wstring> &options);
 	/// Blits the combo box onto another surface.
-	void blit(Surface *surface);	
+	void blit(Surface *surface);
 	/// Thinks arrow buttons.
 	void think();
 	/// Handle arrow buttons.
@@ -111,5 +109,3 @@ public:
 };
 
 }
-
-#endif

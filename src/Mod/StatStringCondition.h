@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,15 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_STATSTRINGCONDITION_H
-#define OPENXCOM_STATSTRINGCONDITION_H
-
 #include <string>
 
 namespace OpenXcom
 {
 
-class StatStringCondition 
+class StatStringCondition
 {
 private:
 	std::string _conditionName;
@@ -35,13 +33,14 @@ public:
 	StatStringCondition(const std::string &conditionName, int minVal, int maxVal);
 	/// Cleans up the StatStringCondition.
 	virtual ~StatStringCondition();
-	/// Get MinVal.
-	std::string getConditionName();
-	/// Get MinVal.
-	int getMinVal();
-	/// Get MaxVal.
-	int getMaxVal();
+	/// Gets the condition name.
+	std::string getConditionName() const;
+	/// Gets the minimum value.
+	int getMinVal() const;
+	/// Gets the maximum value.
+	int getMaxVal() const;
+	/// Checks if the condition has been met.
+	bool isMet(int stat, bool psi) const;
 };
 
 }
-#endif

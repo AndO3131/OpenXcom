@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -17,10 +17,10 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "PurchaseState.h"
+#include <algorithm>
 #include <sstream>
 #include <climits>
 #include <cfloat>
-#include <cmath>
 #include <iomanip>
 #include "../fmath.h"
 #include "../Engine/Game.h"
@@ -43,7 +43,6 @@
 #include "../Menu/ErrorMessageState.h"
 #include "../Mod/RuleInterface.h"
 #include "../Mod/RuleSoldier.h"
-#include "../Savegame/Soldier.h"
 #include "../Mod/RuleCraftWeapon.h"
 #include "../Mod/Armor.h"
 
@@ -547,7 +546,8 @@ void PurchaseState::increaseByValue(int change)
 	if (errorMessage.empty())
 	{
 		int maxByMoney = (_game->getSavedGame()->getFunds() - _total) / getRow().cost;
-		change = std::min(maxByMoney, change);
+		if (maxByMoney >= 0)
+			change = std::min(maxByMoney, change);
 		switch (getRow().type)
 		{
 		case TRANSFER_SOLDIER:

@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http:///www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_CONFIRMNEWBASESTATE_H
-#define OPENXCOM_CONFIRMNEWBASESTATE_H
-
 #include "../Engine/State.h"
 
 namespace OpenXcom
@@ -33,7 +31,7 @@ class Globe;
 /**
  * Screen that allows the player
  * to confirm a new base on the globe.
- * Note: This is different from the starting base screen, BaseNameState 
+ * Note: This is different from the starting base screen, BaseNameState
  */
 class ConfirmNewBaseState : public State
 {
@@ -56,5 +54,3 @@ public:
 };
 
 }
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -88,11 +88,11 @@ void Waypoint::setId(int id)
 }
 
 /**
- * Returns the waypoint's unique identifying name.
+ * Returns the waypoint's unique default name.
  * @param lang Language to get strings from.
  * @return Full name.
  */
-std::wstring Waypoint::getName(Language *lang) const
+std::wstring Waypoint::getDefaultName(Language *lang) const
 {
 	return lang->getString("STR_WAY_POINT_").arg(_id);
 }

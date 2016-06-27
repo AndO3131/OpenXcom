@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -305,4 +305,5 @@ void NumberText::setBordered(bool bordered)
 {
 	_bordered = bordered;
 }
+
 }

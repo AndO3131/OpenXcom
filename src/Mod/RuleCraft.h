@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_RULECRAFT_H
-#define OPENXCOM_RULECRAFT_H
-
 #include <vector>
 #include <string>
 #include <yaml-cpp/yaml.h>
@@ -43,7 +41,7 @@ private:
 	int _sprite, _marker;
 	int _fuelMax, _damageMax, _speedMax, _accel, _weapons, _soldiers, _vehicles, _costBuy, _costRent, _costSell;
 	std::string _refuelItem;
-	int _repairRate, _refuelRate, _radarRange, _sightRange, _transferTime, _score;
+	int _repairRate, _refuelRate, _radarRange, _radarChance, _sightRange, _transferTime, _score;
 	RuleTerrain *_battlescapeTerrainData;
 	bool _spacecraft;
 	int _listOrder, _maxItems, _maxDepth;
@@ -91,6 +89,8 @@ public:
 	int getRefuelRate() const;
 	/// Gets the craft's radar range.
 	int getRadarRange() const;
+	/// Gets the craft's radar chance.
+	inline int getRadarChance() const {return _radarChance;}
 	/// Gets the craft's sight range.
 	int getSightRange() const;
 	/// Gets the craft's transfer time.
@@ -112,5 +112,3 @@ public:
 };
 
 }
-
-#endif

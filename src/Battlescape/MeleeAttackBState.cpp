@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -22,13 +22,10 @@
 #include "BattlescapeState.h"
 #include "TileEngine.h"
 #include "Map.h"
-#include "InfoboxState.h"
 #include "Camera.h"
-#include "AlienBAIState.h"
+#include "AIModule.h"
 #include "../Savegame/Tile.h"
 #include "../Engine/RNG.h"
-#include "../Engine/Game.h"
-#include "../Engine/Language.h"
 #include "../Savegame/SavedBattleGame.h"
 #include "../Savegame/BattleUnit.h"
 #include "../Savegame/BattleItem.h"
@@ -63,12 +60,15 @@ void MeleeAttackBState::init()
 	_initialized = true;
 
 	_weapon = _action.weapon;
-	_ammo = _weapon->getAmmoItem();
-
 	if (!_weapon) // can't shoot without weapon
 	{
 		_parent->popState();
 		return;
+	}
+	_ammo = _weapon->getAmmoItem();
+	if (!_ammo)
+	{
+		_ammo = _weapon;
 	}
 
 	if (!_parent->getSave()->getTile(_action.target)) // invalid target position
@@ -107,7 +107,7 @@ void MeleeAttackBState::init()
 	}
 
 	
-	AlienBAIState *ai = dynamic_cast<AlienBAIState*>(_unit->getCurrentAIState());
+	AIModule *ai = _unit->getAIModule();
 
 	if (_unit->getFaction() == _parent->getSave()->getSide() &&
 		_unit->getFaction() != FACTION_PLAYER &&
@@ -218,7 +218,7 @@ void MeleeAttackBState::performMeleeAttack()
 void MeleeAttackBState::resolveHit()
 {
 	if (RNG::percent(_unit->getFiringAccuracy(BA_HIT, _weapon)))
-	{	
+	{
 		// Give soldiers XP
 		if (_unit->getGeoscapeSoldier() &&
 			_target && _target->getOriginalFaction() == FACTION_HOSTILE)
@@ -227,7 +227,9 @@ void MeleeAttackBState::resolveHit()
 		}
 
 		// check if this unit turns others into zombies
-		if (!_ammo->getRules()->getZombieUnit().empty()
+		if (_weapon->getRules()->getBattleType() == BT_MELEE 
+			&& _ammo
+			&& !_ammo->getRules()->getZombieUnit().empty()
 			&& _target
 			&& (_target->getGeoscapeSoldier() || _target->getUnitRules()->getRace() == "STR_CIVILIAN")
 			&& _target->getSpawnUnit().empty())
@@ -237,14 +239,14 @@ void MeleeAttackBState::resolveHit()
 			_target->setSpawnUnit(_ammo->getRules()->getZombieUnit());
 		}
 
-		ItemDamageType type = _ammo->getRules()->getDamageType();
-		int power = _ammo->getRules()->getPower();
-
-		// special code for attacking with a rifle butt.
-		if (_weapon->getRules()->getBattleType() == BT_FIREARM)
+		// assume rifle butt to begin with.
+		ItemDamageType type = DT_STUN;
+		int power = _weapon->getRules()->getMeleePower();
+		// override it as needed.
+		if (_weapon->getRules()->getBattleType() == BT_MELEE && _ammo)
 		{
-			type = DT_STUN;
-			power = _weapon->getRules()->getMeleePower();
+			type = _ammo->getRules()->getDamageType();;
+			power = _ammo->getRules()->getPower();
 		}
 
 		// since melee aliens don't use a conventional weapon type, we use their strength instead.

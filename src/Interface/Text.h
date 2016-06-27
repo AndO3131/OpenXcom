@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_TEXT_H
-#define OPENXCOM_TEXT_H
-
 #include "../Engine/Surface.h"
 #include <vector>
 #include <string>
@@ -90,6 +88,8 @@ public:
 	TextHAlign getAlign() const;
 	/// Sets the text's vertical alignment.
 	void setVerticalAlign(TextVAlign valign);
+	/// Gets the text's vertical alignment.
+	TextVAlign getVerticalAlign() const;
 	/// Sets the text's color.
 	void setColor(Uint8 color);
 	/// Gets the text's color.
@@ -109,5 +109,3 @@ public:
 };
 
 }
-
-#endif

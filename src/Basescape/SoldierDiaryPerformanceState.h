@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_SOLDIERDIARYPERFORMANCESTATE_H
-#define OPENXCOM_SOLDIERDIARYPERFORMANCESTATE_H
-
 #include "../Engine/State.h"
 #include <vector>
 #include <string>
@@ -52,12 +50,8 @@ private:
 
 	TextButton *_btnOk, *_btnPrev, *_btnNext, *_btnKills, *_btnMissions, *_btnCommendations;
 	Window *_window;
-	Text *_txtTitle, *_txtRank, *_txtRace, *_txtWeapon;
-	Text *_txtLocation, *_txtType, *_txtUFO;
-	Text *_txtMedalName, *_txtMedalLevel, *_txtMedalInfo;
-	TextList *_lstRank, *_lstRace, *_lstWeapon, *_lstKillTotals;
-	TextList *_lstLocation, *_lstType, *_lstUFO, *_lstMissionTotals;
-	TextList *_lstCommendations;
+	Text *_txtTitle, *_txtMedalName, *_txtMedalLevel, *_txtMedalInfo;
+	TextList *_lstPerformance, *_lstKillTotals, *_lstMissionTotals, *_lstCommendations;
 	std::vector<std::wstring> _commendationsListEntry;
 	std::vector<Surface*> _commendations, _commendationDecorations;
 	SurfaceSet *_commendationSprite, *_commendationDecoration;
@@ -96,5 +90,3 @@ public:
 };
 
 }
-
-#endif

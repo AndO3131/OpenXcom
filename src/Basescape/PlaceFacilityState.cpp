@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -31,7 +31,7 @@
 #include "../Menu/ErrorMessageState.h"
 #include "../Engine/Options.h"
 #include "../Mod/RuleInterface.h"
-#include <limits>
+#include <climits>
 
 namespace OpenXcom
 {
@@ -145,7 +145,7 @@ void PlaceFacilityState::viewClick(Action *)
 		_base->getFacilities()->push_back(fac);
 		if (Options::allowBuildingQueue)
 		{
-			if (_view->isQueuedBuilding(_rule)) fac->setBuildTime(std::numeric_limits<int>::max());
+			if (_view->isQueuedBuilding(_rule)) fac->setBuildTime(INT_MAX);
 			_view->reCalcQueuedBuildings();
 		}
 		_game->getSavedGame()->setFunds(_game->getSavedGame()->getFunds() - _rule->getBuildCost());

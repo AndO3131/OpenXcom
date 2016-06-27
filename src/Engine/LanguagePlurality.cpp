@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -235,6 +235,7 @@ LanguagePlurality *LanguagePlurality::create(const std::string &language)
 	if (s_factoryFunctions.empty())
 	{
 		s_factoryFunctions.insert(std::make_pair("fr", &ZeroOneSingular::create));
+		s_factoryFunctions.insert(std::make_pair("fr-CA", &ZeroOneSingular::create));
 		s_factoryFunctions.insert(std::make_pair("hu", &NoSingular::create));
 		s_factoryFunctions.insert(std::make_pair("tr", &NoSingular::create));
 		s_factoryFunctions.insert(std::make_pair("cs", &CzechPlurality::create));

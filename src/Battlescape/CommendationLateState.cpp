@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -143,7 +143,7 @@ CommendationLateState::CommendationLateState(std::vector<Soldier*> soldiersMedal
 						{
 							skipCounter++;
 						}
-						vectorIterator++;					
+						vectorIterator++;
 					}
 					// Establish comms name
 					// Medal name
@@ -159,15 +159,14 @@ CommendationLateState::CommendationLateState(std::vector<Soldier*> soldiersMedal
 					_lstSoldiers->addRow(5, wssCommendation.str().c_str(), L"", L"", L"", tr((*soldierComm)->getDecorationLevelName(skipCounter)).c_str());
 					break;
 				}
-			} // END SOLDIER COMMS LOOP			
-      
+			} // END SOLDIER COMMS LOOP
+	  
 			if (noun == "noNoun")
 			{
 				++commList;
 			}
 		} // END COMMS LOOPS
-		_lstSoldiers->addRow(5, L"", L"", L"", L"", L""); // Seperator
-	} // END SOLDIER LOOP    
+	} // END SOLDIER LOOP
 }
 
 /**

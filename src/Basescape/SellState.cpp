@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -17,6 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "SellState.h"
+#include <algorithm>
 #include <sstream>
 #include <climits>
 #include <cmath>
@@ -210,7 +211,7 @@ SellState::SellState(Base *base, OptionsOrigin origin) : _base(base), _sel(0), _
 	for (std::vector<std::string>::const_iterator i = items.begin(); i != items.end(); ++i)
 	{
 		int qty = _base->getStorageItems()->getItem(*i);
-		if (Options::storageLimitsEnforced && origin == OPT_BATTLESCAPE)
+		if (Options::storageLimitsEnforced && _origin == OPT_BATTLESCAPE)
 		{
 			for (std::vector<Transfer*>::iterator j = _base->getTransfers()->begin(); j != _base->getTransfers()->end(); ++j)
 			{
@@ -333,7 +334,7 @@ void SellState::updateList()
 			}
 		}
 		std::wostringstream ssQty, ssAmount;
-		ssQty << _items[i].qtySrc;
+		ssQty << _items[i].qtySrc - _items[i].amount;
 		ssAmount << _items[i].amount;
 		_lstItems->addRow(4, name.c_str(), ssQty.str().c_str(), ssAmount.str().c_str(), Text::formatFunding(_items[i].cost).c_str());
 		_rows.push_back(i);
@@ -382,42 +383,10 @@ void SellState::btnOkClick(Action *)
 			case TRANSFER_CRAFT:
 				craft = (Craft*)i->rule;
 
-				// Remove weapons from craft
-				for (std::vector<CraftWeapon*>::iterator w = craft->getWeapons()->begin(); w != craft->getWeapons()->end(); ++w)
-				{
-					if ((*w) != 0)
-					{
-						_base->getStorageItems()->addItem((*w)->getRules()->getLauncherItem());
-						_base->getStorageItems()->addItem((*w)->getRules()->getClipItem(), (*w)->getClipsLoaded(_game->getMod()));
-					}
-				}
+				// Unload craft
+				craft->unload(_game->getMod());
 
-				// Remove items from craft
-				for (std::map<std::string, int>::iterator it = craft->getItems()->getContents()->begin(); it != craft->getItems()->getContents()->end(); ++it)
-				{
-					_base->getStorageItems()->addItem(it->first, it->second);
-				}
-
-				// Remove vehicles from craft
-				for (std::vector<Vehicle*>::iterator v = craft->getVehicles()->begin(); v != craft->getVehicles()->end(); ++v)
-				{
-					_base->getStorageItems()->addItem((*v)->getRules()->getType());
-					if (!(*v)->getRules()->getCompatibleAmmo()->empty())
-					{
-						_base->getStorageItems()->addItem((*v)->getRules()->getCompatibleAmmo()->front(), (*v)->getAmmo());
-					}
-				}
-
-				// Remove soldiers from craft
-				for (std::vector<Soldier*>::iterator s = _base->getSoldiers()->begin(); s != _base->getSoldiers()->end(); ++s)
-				{
-					if ((*s)->getCraft() == craft)
-					{
-						(*s)->setCraft(0);
-					}
-				}
-
-				// Clear Hangar
+				// Clear hangar
 				for (std::vector<BaseFacility*>::iterator f = _base->getFacilities()->begin(); f != _base->getFacilities()->end(); ++f)
 				{
 					if ((*f)->getCraft() == craft)

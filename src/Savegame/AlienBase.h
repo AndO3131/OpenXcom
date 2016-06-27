@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,11 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_ALIENBASE_H
-#define OPENXCOM_ALIENBASE_H
-
 #include "Target.h"
 #include <string>
+#include "../Mod/AlienDeployment.h"
 #include <yaml-cpp/yaml.h>
 
 namespace OpenXcom
@@ -35,9 +34,10 @@ private:
 	int _id;
 	std::string _race;
 	bool _inBattlescape, _discovered;
+	AlienDeployment *_deployment;
 public:
 	/// Creates an alien base.
-	AlienBase();
+	AlienBase(AlienDeployment *deployment);
 	/// Cleans up the alien base.
 	~AlienBase();
 	/// Loads the alien base from YAML.
@@ -50,8 +50,8 @@ public:
 	int getId() const;
 	/// Sets the alien base's ID.
 	void setId(int id);
-	/// Gets the alien base's name.
-	std::wstring getName(Language *lang) const;
+	/// Gets the alien base's default name.
+	std::wstring getDefaultName(Language *lang) const;
 	/// Gets the alien base's marker.
 	int getMarker() const;
 	/// Gets the alien base's amount of active hours..
@@ -66,8 +66,9 @@ public:
 	bool isDiscovered() const;
 	/// Sets the alien base's discovered status.
 	void setDiscovered(bool discovered);
+
+	AlienDeployment *getDeployment() const;
+ 
 };
 
 }
-
-#endif

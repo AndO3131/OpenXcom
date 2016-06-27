@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_SOLDIERMEMORIALSTATE_H
-#define OPENXCOM_SOLDIERMEMORIALSTATE_H
-
 #include "../Engine/State.h"
 
 namespace OpenXcom
@@ -28,7 +26,6 @@ class TextButton;
 class Window;
 class Text;
 class TextList;
-class Base;
 
 /**
  * Screen that shows all the soldiers
@@ -37,7 +34,7 @@ class Base;
 class SoldierMemorialState : public State
 {
 private:
-	TextButton *_btnOk;
+	TextButton *_btnOk, *_btnStatistics;
 	Window *_window;
 	Text *_txtTitle, *_txtName, *_txtRank, *_txtDate, *_txtRecruited, *_txtLost;
 	TextList *_lstSoldiers;
@@ -48,10 +45,10 @@ public:
 	~SoldierMemorialState();
 	/// Handler for clicking the OK button.
 	void btnOkClick(Action *action);
+	/// Handler for clicking the Statistics button.
+	void btnStatisticsClick(Action *action);
 	/// Handler for clicking the Soldiers list.
 	void lstSoldiersClick(Action *action);
 };
 
 }
-
-#endif

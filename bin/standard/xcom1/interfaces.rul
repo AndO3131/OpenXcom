@@ -179,9 +179,10 @@ interfaces:
         color: 0     # brown
       - id: window
         color: 138   # yellow
-      - id: text
+      - id: text1
         color: 239   # bright green
-        color2: 138  # yellow
+      - id: text2
+        color: 138  # yellow
       - id: button
         color: 133   # minty green
   - type: confirmDestination
@@ -528,7 +529,6 @@ interfaces:
         color2: 138  # yellow
       - id: button
         color: 239   # bright green
-    elements: 
   - type: geoscape
     elements:
       - id: palette
@@ -994,6 +994,7 @@ interfaces:
         color2: 218  # blue
       - id: list
         color: 218   # blue
+        color2: 241   # pink
         border: 241  # pink
       - id: button
         color: 246   # purple

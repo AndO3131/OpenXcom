@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_PROJECTILE_H
-#define OPENXCOM_PROJECTILE_H
-
 #include <vector>
 #include "Position.h"
 #include "BattlescapeGame.h"
@@ -74,9 +72,9 @@ public:
 	/// Skips the bullet flight.
 	void skipTrajectory();
 	/// Gets the Position of origin for the projectile.
-	Position getOrigin();
+	Position getOrigin() const;
 	/// Gets the targetted tile for the projectile.
-	Position getTarget();
+	Position getTarget() const;
 	/// Is this projectile being drawn back-to-front or front-to-back?
 	bool isReversed() const;
 	/// adds a cloud of particles at the projectile's location
@@ -84,5 +82,3 @@ public:
 };
 
 }
-
-#endif

@@ -1,5 +1,6 @@
-	/*
- * Copyright 2010-2015 OpenXcom Developers.
+	#pragma once
+/*
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -16,9 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OPENXCOM_SCREEN_H
-#define OPENXCOM_SCREEN_H
-
 #include <SDL.h>
 #include <string>
 #include "OpenGL.h"
@@ -63,9 +61,9 @@ public:
 	/// Cleans up the display screen.
 	~Screen();
 	/// Get horizontal offset.
-	int getDX();
+	int getDX() const;
 	/// Get vertical offset.
-	int getDY();
+	int getDY() const;
 	/// Gets the internal buffer.
 	Surface *getSurface();
 	/// Handles keyboard events.
@@ -103,5 +101,3 @@ public:
 };
 
 }
-
-#endif

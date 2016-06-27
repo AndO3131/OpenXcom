@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -382,7 +382,7 @@ MapBlock *MapScript::getNextBlock(RuleTerrain *terrain)
  * Gets the name of the UFO in the case of "setUFO"
  * @return the UFO name.
  */
-std::string MapScript::getUFOName()
+std::string MapScript::getUFOName() const
 {
 	return _ufoName;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 OpenXcom Developers.
+ * Copyright 2010-2016 OpenXcom Developers.
  *
  * This file is part of OpenXcom.
  *
@@ -125,18 +125,6 @@ ItemsArrivingState::ItemsArrivingState(GeoscapeState *state) : _state(state), _b
 									(*w)->setRearming(true);
 									(*c)->setStatus("STR_REARMING");
 								}
-							}
-						}
-						// Check if it's ammo to reload a vehicle
-						for (std::vector<Vehicle*>::iterator v = (*c)->getVehicles()->begin(); v != (*c)->getVehicles()->end(); ++v)
-						{
-							std::vector<std::string>::iterator ammo = std::find((*v)->getRules()->getCompatibleAmmo()->begin(), (*v)->getRules()->getCompatibleAmmo()->end(), item->getType());
-							if (ammo != (*v)->getRules()->getCompatibleAmmo()->end() && (*v)->getAmmo() < item->getClipSize())
-							{
-								int used = std::min((*j)->getQuantity(), item->getClipSize() - (*v)->getAmmo());
-								(*v)->setAmmo((*v)->getAmmo() + used);
-								// Note that the items have already been delivered, so we remove them from the base, not the transfer
-								_base->getStorageItems()->removeItem(item->getType(), used);
 							}
 						}
 					}
