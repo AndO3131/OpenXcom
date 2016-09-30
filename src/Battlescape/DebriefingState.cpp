@@ -874,14 +874,6 @@ void DebriefingState::prepareDebriefing()
 				std::for_each(save->getAlienMissions().begin(), save->getAlienMissions().end(),
 							ClearAlienBase(*i));
 
-				for (std::vector<Target*>::iterator j = (*i)->getFollowers()->begin(); j != (*i)->getFollowers()->end(); ++j)
-				{
-					Craft* c = dynamic_cast<Craft*>(*j);
-					if (c != 0) // not sure what else this could be but safety can't hurt.
-					{
-						c->returnToBase();
-					}
-				}
 				delete *i;
 				save->getAlienBases()->erase(i);
 				break;
@@ -1020,13 +1012,16 @@ void DebriefingState::prepareDebriefing()
 			}
 			else if (oldFaction == FACTION_HOSTILE && (!aborted || (*j)->isInExitArea())
 				// mind controlled units may as well count as unconscious
-				&& faction == FACTION_PLAYER && !(*j)->isOut())
+				&& faction == FACTION_PLAYER && (!(*j)->isOut() || (*j)->getStatus() == STATUS_IGNORE_ME))
 			{
-				for (std::vector<BattleItem*>::iterator k = (*j)->getInventory()->begin(); k != (*j)->getInventory()->end(); ++k)
+				if ((*j)->getTile())
 				{
-					if (!(*k)->getRules()->isFixed())
+					for (std::vector<BattleItem*>::iterator k = (*j)->getInventory()->begin(); k != (*j)->getInventory()->end(); ++k)
 					{
-						(*j)->getTile()->addItem(*k, _game->getMod()->getInventory("STR_GROUND"));
+						if (!(*k)->getRules()->isFixed())
+						{
+							(*j)->getTile()->addItem(*k, _game->getMod()->getInventory("STR_GROUND"));
+						}
 					}
 				}
 				recoverAlien(*j, base);
@@ -1045,22 +1040,9 @@ void DebriefingState::prepareDebriefing()
 			}
 		}
 	}
-
 	if (craft != 0 && ((playerInExitArea == 0 && aborted) || (playersSurvived == 0)))
 	{
 		addStat("STR_XCOM_CRAFT_LOST", 1, -craft->getRules()->getScore());
-		for (std::vector<Soldier*>::iterator i = base->getSoldiers()->begin(); i != base->getSoldiers()->end();)
-		{
-			if ((*i)->getCraft() == craft)
-			{
-				delete (*i);
-				i = base->getSoldiers()->erase(i);
-			}
-			else
-			{
-				++i;
-			}
-		}
 		// Since this is not a base defense mission, we can safely erase the craft,
 		// without worrying it's vehicles' destructor calling double (on base defense missions
 		// all vehicle object in the craft is also referenced by base->getVehicles() !!)
@@ -1068,14 +1050,17 @@ void DebriefingState::prepareDebriefing()
 		craft = 0; // To avoid a crash down there!!
 		base->getCrafts()->erase(craftIterator);
 		_txtTitle->setText(tr("STR_CRAFT_IS_LOST"));
-		return;
+		playersSurvived = 0; // assuming you aborted and left everyone behind
+		success = false;
 	}
-	if (aborted && target == "STR_BASE" && !base->getCrafts()->empty())
+	if ((aborted || playersSurvived == 0) && target == "STR_BASE")
 	{
 		for (std::vector<Craft*>::iterator i = base->getCrafts()->begin(); i != base->getCrafts()->end(); ++i)
 		{
 			addStat("STR_XCOM_CRAFT_LOST", 1, -(*i)->getRules()->getScore());
 		}
+		playersSurvived = 0; // assuming you aborted and left everyone behind
+		success = false;
 	}
 	if ((!aborted || success) && playersSurvived > 0) 	// RECOVER UFO : run through all tiles to recover UFO components and items
 	{
@@ -1105,7 +1090,11 @@ void DebriefingState::prepareDebriefing()
 			// if this was a 2-stage mission, and we didn't abort (ie: we have time to clean up)
 			// we can recover items from the earlier stages as well
 			recoverItems(battle->getConditionalRecoveredItems(), base);
-
+			int nonRecoverType = 0;
+			if (deployment && deployment->getObjectiveType())
+			{
+				nonRecoverType = deployment->getObjectiveType();
+			}
 			for (int i = 0; i < battle->getMapSizeXYZ(); ++i)
 			{
 				// get recoverable map data objects from the battlescape map
@@ -1113,8 +1102,8 @@ void DebriefingState::prepareDebriefing()
 				{
 					if (battle->getTiles()[i]->getMapData(part))
 					{
-						size_t specialType = battle->getTiles()[i]->getMapData(part)->getSpecialType();
-						if (_recoveryStats.find(specialType) != _recoveryStats.end())
+						int specialType = battle->getTiles()[i]->getMapData(part)->getSpecialType();
+						if (specialType != nonRecoverType && _recoveryStats.find(specialType) != _recoveryStats.end())
 						{
 							addStat(_recoveryStats[specialType]->name, 1, _recoveryStats[specialType]->value);
 						}

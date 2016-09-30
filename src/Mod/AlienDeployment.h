@@ -20,6 +20,8 @@
 #include <vector>
 #include <string>
 #include <yaml-cpp/yaml.h>
+#include "Mod.h"
+#include "../Savegame/WeightedOptions.h"
 
 namespace OpenXcom
 {
@@ -70,7 +72,8 @@ private:
 	std::string _winCutscene, _loseCutscene;
 	std::string _alert, _alertBackground;
 	BriefingData _briefingData;
-	std::string _markerName, _objectivePopup, _objectiveCompleteText, _objectiveFailedText, _genMissionType;
+	std::string _markerName, _objectivePopup, _objectiveCompleteText, _objectiveFailedText;
+	WeightedOptions _genMission;
 	int _markerIcon, _durationMin, _durationMax, _minDepth, _maxDepth, _minSiteDepth, _maxSiteDepth, _genMissionFrequency;
 	int _objectiveType, _objectivesRequired, _objectiveCompleteScore, _objectiveFailedScore, _despawnPenalty, _points, _turnLimit, _cheatTurn;
 	ChronoTrigger _chronoTrigger;
@@ -80,7 +83,7 @@ public:
 	/// Cleans up the Alien Deployment ruleset.
 	~AlienDeployment();
 	/// Loads Alien Deployment data from YAML.
-	void load(const YAML::Node& node);
+	void load(const YAML::Node& node, Mod *mod);
 	/// Gets the Alien Deployment's type.
 	std::string getType() const;
 	/// Gets a pointer to the data.

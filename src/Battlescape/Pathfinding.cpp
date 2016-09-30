@@ -299,7 +299,7 @@ int Pathfinding::getTUCost(const Position &startPosition, int direction, Positio
 			Position verticalOffset (0, 0, 0);
 
 			// if we are on a stairs try to go up a level
-			if (direction < DIR_UP && startTile->getTerrainLevel() <= -16 && !aboveDestination->hasNoFloor(destinationTile) && !triedStairs)
+			if (direction < DIR_UP && startTile->getTerrainLevel() <= -16 && aboveDestination && !aboveDestination->hasNoFloor(destinationTile) && !triedStairs)
 			{
 					numberOfPartsGoingUp++;
 
@@ -433,7 +433,8 @@ int Pathfinding::getTUCost(const Position &startPosition, int direction, Positio
 				cost = (int)((double)cost * 1.5);
 			}
 			cost += wallcost;
-			if (_unit->getFaction() == FACTION_HOSTILE &&
+			if (_unit->getFaction() != FACTION_PLAYER &&
+				_unit->getSpecialAbility() < SPECAB_BURNFLOOR &&
 				destinationTile->getFire() > 0)
 				cost += 32; // try to find a better path, but don't exclude this path entirely.
 

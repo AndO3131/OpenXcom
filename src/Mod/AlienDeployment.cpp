@@ -130,7 +130,7 @@ AlienDeployment::~AlienDeployment()
  * Loads the Deployment from a YAML file.
  * @param node YAML node.
  */
-void AlienDeployment::load(const YAML::Node &node)
+void AlienDeployment::load(const YAML::Node &node, Mod *mod)
 {
 	_type = node["type"].as<std::string>(_type);
 	_data = node["data"].as< std::vector<DeploymentData> >(_data);
@@ -150,7 +150,12 @@ void AlienDeployment::load(const YAML::Node &node)
 	_alertBackground = node["alertBackground"].as<std::string>(_alertBackground);
 	_briefingData = node["briefing"].as<BriefingData>(_briefingData);
 	_markerName = node["markerName"].as<std::string>(_markerName);
-	_markerIcon = node["markerIcon"].as<int>(_markerIcon);
+	if (node["markerIcon"])
+	{
+		_markerIcon = node["markerIcon"].as<int>(_markerIcon);
+		if (_markerIcon > 8)
+			_markerIcon += mod->getModOffset();
+	}
 	if (node["depth"])
 	{
 		_minDepth = node["depth"][0].as<int>(_minDepth);
@@ -187,7 +192,10 @@ void AlienDeployment::load(const YAML::Node &node)
 	_turnLimit = node["turnLimit"].as<int>(_turnLimit);
 	_chronoTrigger = ChronoTrigger(node["chronoTrigger"].as<int>(_chronoTrigger));
 	_isAlienBase = node["alienBase"].as<bool>(_isAlienBase);
-	_genMissionType = node["genMissionType"].as<std::string>(_genMissionType);
+	if (node["genMission"])
+	{
+		_genMission.load(node["genMission"]);
+	}
 	_genMissionFrequency = node["genMissionFreq"].as<int>(_genMissionFrequency);
 }
 
@@ -518,7 +526,7 @@ bool AlienDeployment::isAlienBase() const
 
 std::string AlienDeployment::getGenMissionType() const
 {
-	return _genMissionType;
+	return _genMission.choose();
 }
 
 int AlienDeployment::getGenMissionFrequency() const
