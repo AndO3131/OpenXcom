@@ -66,7 +66,7 @@ void MiniMapView::draw()
 	{
 		return;
 	}
-	drawRect(0, 0, getWidth(), getHeight(), 0);
+	drawRect(0, 0, getWidth(), getHeight(), 15);
 	this->lock();
 	for (int lvl = 0; lvl <= _camera->getCenterPosition().z; lvl++)
 	{
@@ -85,20 +85,22 @@ void MiniMapView::draw()
 					px++;
 					continue;
 				}
-				if (t->isDiscovered(2))
+				for (int i = 0; i < 4; i++)
 				{
-					for (int i = 0; i < 4; i++)
-					{
-						data = t->getMapData(i);
+					data = t->getMapData(i);
 
-						Surface * s = 0;
-						if (data && data->getMiniMapIndex())
-						{
-							s = _set->getFrame (data->getMiniMapIndex()+35);
-						}
+					if (data && data->getMiniMapIndex())
+					{
+						Surface * s = _set->getFrame (data->getMiniMapIndex()+35);
 						if (s)
 						{
-							s->blitNShade(this, x, y, t->getShade());
+							int shade = 16;
+							if (t->isDiscovered(2))
+							{
+								shade = t->getShade();
+								if (shade > 7) shade = 7; //vanilla
+							}
+							s->blitNShade(this, x, y, shade);
 						}
 					}
 				}

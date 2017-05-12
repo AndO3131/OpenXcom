@@ -78,11 +78,6 @@ namespace OpenXcom
 namespace CrossPlatform
 {
 	std::string errorDlg;
-#ifdef _WIN32
-	const char PATH_SEPARATOR = '\\';
-#else
-	const char PATH_SEPARATOR = '/';
-#endif
 
 /**
  * Determines the available Linux error dialogs.
@@ -92,7 +87,9 @@ void getErrorDialog()
 #ifndef _WIN32
 	if (system(NULL))
 	{
-		if (system("which zenity 2>&1 > /dev/null") == 0)
+		if (getenv("KDE_SESSION_UID") && system("which kdialog 2>&1 > /dev/null") == 0)
+			errorDlg = "kdialog --error ";
+		else if (system("which zenity 2>&1 > /dev/null") == 0)
 			errorDlg = "zenity --error --text=";
 		else if (system("which kdialog 2>&1 > /dev/null") == 0)
 			errorDlg = "kdialog --error ";
@@ -137,13 +134,11 @@ void showError(const std::string &error)
 static char const *getHome()
 {
 	char const *home = getenv("HOME");
-#ifndef _WIN32
 	if (!home)
 	{
 		struct passwd *const pwd = getpwuid(getuid());
 		home = pwd->pw_dir;
 	}
-#endif
 	return home;
 }
 #endif
@@ -223,16 +218,13 @@ std::vector<std::string> findDataFolders()
 	list.push_back("/Users/Shared/OpenXcom/");
 #else
 	list.push_back("/usr/local/share/openxcom/");
-#ifndef __FreeBSD__
 	list.push_back("/usr/share/openxcom/");
-#endif
 #ifdef DATADIR
 	snprintf(path, MAXPATHLEN, "%s/", DATADIR);
 	list.push_back(path);
 #endif
 
 #endif
-	
 	// Get working directory
 	list.push_back("./");
 #endif
@@ -254,7 +246,6 @@ std::vector<std::string> findUserFolders()
 	return list;
 #endif
 
-	
 #ifdef _WIN32
 	char path[MAX_PATH];
 
@@ -565,13 +556,7 @@ bool deleteFile(const std::string &path)
 
 std::string baseFilename(const std::string &path)
 {
-	size_t sep = path.find_last_of(
-#ifdef _WIN32
-		"/\\"
-#else
-		"/"
-#endif
-		);
+	size_t sep = path.find_last_of("/\\");
 	std::string filename;
 	if (sep == std::string::npos)
 	{

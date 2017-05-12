@@ -371,10 +371,11 @@ Mod::~Mod()
  * @param id String ID of the rule element.
  * @param name Human-readable name of the rule type.
  * @param map Map associated to the rule type.
+ * @param error Throw an error if not found.
  * @return Pointer to the rule element, or NULL if not found.
  */
 template <typename T>
-T *Mod::getRule(const std::string &id, const std::string &name, const std::map<std::string, T*> &map) const
+T *Mod::getRule(const std::string &id, const std::string &name, const std::map<std::string, T*> &map, bool error) const
 {
 	if (id.empty())
 	{
@@ -387,10 +388,10 @@ T *Mod::getRule(const std::string &id, const std::string &name, const std::map<s
 	}
 	else
 	{
-//		if (id != Armor::NONE)
-//		{
-//			Log(LOG_WARNING) << name << " " << id << " not found";
-//		}
+		if (error)
+		{
+			throw Exception(name + " " + id + " not found");
+		}
 		return 0;
 	}
 }
@@ -400,9 +401,9 @@ T *Mod::getRule(const std::string &id, const std::string &name, const std::map<s
  * @param name Name of the font.
  * @return Pointer to the font.
  */
-Font *Mod::getFont(const std::string &name) const
+Font *Mod::getFont(const std::string &name, bool error) const
 {
-	return getRule(name, "Font", _fonts);
+	return getRule(name, "Font", _fonts, error);
 }
 
 /**
@@ -410,9 +411,9 @@ Font *Mod::getFont(const std::string &name) const
  * @param name Name of the surface.
  * @return Pointer to the surface.
  */
-Surface *Mod::getSurface(const std::string &name) const
+Surface *Mod::getSurface(const std::string &name, bool error) const
 {
-	return getRule(name, "Surface", _surfaces);
+	return getRule(name, "Sprite", _surfaces, error);
 }
 
 /**
@@ -420,10 +421,9 @@ Surface *Mod::getSurface(const std::string &name) const
  * @param name Name of the surface set.
  * @return Pointer to the surface set.
  */
-SurfaceSet *Mod::getSurfaceSet(const std::string &name) const
+SurfaceSet *Mod::getSurfaceSet(const std::string &name, bool error) const
 {
-	std::map<std::string, SurfaceSet*>::const_iterator i = _sets.find(name);
-	if (_sets.end() != i) return i->second; else return 0;
+	return getRule(name, "Sprite Set", _sets, error);
 }
 
 /**
@@ -431,7 +431,7 @@ SurfaceSet *Mod::getSurfaceSet(const std::string &name) const
  * @param name Name of the music.
  * @return Pointer to the music.
  */
-Music *Mod::getMusic(const std::string &name) const
+Music *Mod::getMusic(const std::string &name, bool error) const
 {
 	if (Options::mute)
 	{
@@ -439,8 +439,7 @@ Music *Mod::getMusic(const std::string &name) const
 	}
 	else
 	{
-		std::map<std::string, Music*>::const_iterator i = _musics.find(name);
-		if (_musics.end() != i) return i->second; else return _muteMusic;
+		return getRule(name, "Music", _musics, error);
 	}
 }
 
@@ -511,10 +510,9 @@ void Mod::playMusic(const std::string &name, int id)
  * @param name Name of the sound set.
  * @return Pointer to the sound set.
  */
-SoundSet *Mod::getSoundSet(const std::string &name) const
+SoundSet *Mod::getSoundSet(const std::string &name, bool error) const
 {
-	std::map<std::string, SoundSet*>::const_iterator i = _sounds.find(name);
-	if (_sounds.end() != i) return i->second; else return 0;
+	return getRule(name, "Sound Set", _sounds, error);
 }
 
 /**
@@ -523,7 +521,7 @@ SoundSet *Mod::getSoundSet(const std::string &name) const
  * @param sound ID of the sound.
  * @return Pointer to the sound.
  */
-Sound *Mod::getSound(const std::string &set, unsigned int sound) const
+Sound *Mod::getSound(const std::string &set, unsigned int sound, bool error) const
 {
 	if (Options::mute)
 	{
@@ -531,8 +529,22 @@ Sound *Mod::getSound(const std::string &set, unsigned int sound) const
 	}
 	else
 	{
-		SoundSet *ss = getSoundSet(set);
-		if (ss != 0) return ss->getSound(sound); else return 0;
+		SoundSet *ss = getSoundSet(set, error);
+		if (ss != 0)
+		{
+			Sound *s = ss->getSound(sound);
+			if (s == 0 && error)
+			{
+				std::ostringstream err;
+				err << "Sound " << sound << " in " << set << " not found";
+				throw Exception(err.str());
+			}
+			return s;
+		}
+		else
+		{
+			return 0;
+		}
 	}
 }
 
@@ -541,10 +553,9 @@ Sound *Mod::getSound(const std::string &set, unsigned int sound) const
  * @param name Name of the palette.
  * @return Pointer to the palette.
  */
-Palette *Mod::getPalette(const std::string &name) const
+Palette *Mod::getPalette(const std::string &name, bool error) const
 {
-	std::map<std::string, Palette*>::const_iterator i = _palettes.find(name);
-	if (_palettes.end() != i) return i->second; else return 0;
+	return getRule(name, "Palette", _palettes, error);
 }
 
 /**
@@ -585,12 +596,12 @@ std::vector<Uint16> *Mod::getVoxelData()
  * @param sound ID of the sound.
  * @return Pointer to the sound.
  */
-Sound *Mod::getSoundByDepth(unsigned int depth, unsigned int sound) const
+Sound *Mod::getSoundByDepth(unsigned int depth, unsigned int sound, bool error) const
 {
 	if (depth == 0)
-		return getSound("BATTLE.CAT", sound);
+		return getSound("BATTLE.CAT", sound, error);
 	else
-		return getSound("BATTLE2.CAT", sound);
+		return getSound("BATTLE2.CAT", sound, error);
 }
 
 /**
@@ -723,7 +734,11 @@ void Mod::loadMod(const std::vector<std::string> &rulesetFiles, size_t modIdx)
 		if (!missions.empty())
 		{
 			std::set<std::string>::const_iterator j = missions.begin();
-			bool isSiteType = getAlienMission(*j) && getAlienMission(*j)->getObjective() == OBJECTIVE_SITE;
+			if (!getAlienMission(*j))
+			{
+				throw Exception("Error with MissionScript: " + (*i).first + ": alien mission type: " + *j + " not defined, do not incite the judgement of Amaunator.");
+			}
+			bool isSiteType = getAlienMission(*j)->getObjective() == OBJECTIVE_SITE;
 			rule->setSiteType(isSiteType);
 			for (;j != missions.end(); ++j)
 			{
@@ -748,6 +763,10 @@ void Mod::loadMod(const std::vector<std::string> &rulesetFiles, size_t modIdx)
 		std::vector<std::string> names = weights.getNames();
 		for (std::vector<std::string>::iterator j = names.begin(); j != names.end(); ++j)
 		{
+			if (!getAlienMission(*j))
+			{
+				throw Exception("Error with MissionWeights: Region: " + (*i).first + ": alien mission type: " + *j + " not defined, do not incite the judgement of Amaunator.");
+			}
 			if (getAlienMission(*j)->getObjective() == OBJECTIVE_SITE)
 			{
 				throw Exception("Error with MissionWeights: Region: " + (*i).first + " has " + *j + " listed. Terror mission can only be invoked via missionScript, so sayeth the Spider Queen."); 
@@ -1027,30 +1046,30 @@ void Mod::loadFile(const std::string &filename)
 		}
 		else
 		{
-			std::auto_ptr<MCDPatch> patch(new MCDPatch());
+			MCDPatch *patch = new MCDPatch();
 			patch->load(*i);
-			_MCDPatches[type] = patch.release();
+			_MCDPatches[type] = patch;
 			_MCDPatchesIndex.push_back(type);
 		}
 	}
 	for (YAML::const_iterator i = doc["extraSprites"].begin(); i != doc["extraSprites"].end(); ++i)
 	{
 		std::string type = (*i)["type"].as<std::string>();
-		std::auto_ptr<ExtraSprites> extraSprites(new ExtraSprites());
+		ExtraSprites *extraSprites = new ExtraSprites();
 		// doesn't support modIndex
 		if (type != "TEXTURE.DAT")
 			extraSprites->load(*i, _modOffset);
 		else
 			extraSprites->load(*i, 0);
-		_extraSprites.push_back(std::make_pair(type, extraSprites.release()));
+		_extraSprites.push_back(std::make_pair(type, extraSprites));
 		_extraSpritesIndex.push_back(type);
 	}
 	for (YAML::const_iterator i = doc["extraSounds"].begin(); i != doc["extraSounds"].end(); ++i)
 	{
 		std::string type = (*i)["type"].as<std::string>();
-		std::auto_ptr<ExtraSounds> extraSounds(new ExtraSounds());
+		ExtraSounds *extraSounds = new ExtraSounds();
 		extraSounds->load(*i, _modOffset);
-		_extraSounds.push_back(std::make_pair(type, extraSounds.release()));
+		_extraSounds.push_back(std::make_pair(type, extraSounds));
 		_extraSoundsIndex.push_back(type);
 	}
 	for (YAML::const_iterator i = doc["extraStrings"].begin(); i != doc["extraStrings"].end(); ++i)
@@ -1062,9 +1081,9 @@ void Mod::loadFile(const std::string &filename)
 		}
 		else
 		{
-			std::auto_ptr<ExtraStrings> extraStrings(new ExtraStrings());
+			ExtraStrings *extraStrings = new ExtraStrings();
 			extraStrings->load(*i);
-			_extraStrings[type] = extraStrings.release();
+			_extraStrings[type] = extraStrings;
 			_extraStringsIndex.push_back(type);
 		}
 	}
@@ -1171,9 +1190,9 @@ void Mod::loadFile(const std::string &filename)
 		}
 		for (YAML::const_iterator j = (*i)["commands"].begin(); j != (*i)["commands"].end(); ++j)
 		{
-			std::auto_ptr<MapScript> mapScript(new MapScript());
+			MapScript *mapScript = new MapScript();
 			mapScript->load(*j);
-			_mapScripts[type].push_back(mapScript.release());
+			_mapScripts[type].push_back(mapScript);
 		}
 	}
 	for (YAML::const_iterator i = doc["missionScripts"].begin(); i != doc["missionScripts"].end(); ++i)
@@ -1215,9 +1234,9 @@ void Mod::loadFile(const std::string &filename)
 	for (YAML::const_iterator i = doc["commendations"].begin(); i != doc["commendations"].end(); ++i)
 	{
 		std::string type = (*i)["type"].as<std::string>();
-		std::auto_ptr<RuleCommendations> commendations(new RuleCommendations());
+		RuleCommendations *commendations = new RuleCommendations();
 		commendations->load(*i);
-        _commendations[type] = commendations.release();
+		_commendations[type] = commendations;
 	}
 	size_t count = 0;
 	for (YAML::const_iterator i = doc["aimAndArmorMultipliers"].begin(); i != doc["aimAndArmorMultipliers"].end() && count < 5; ++i)
@@ -1359,10 +1378,9 @@ SavedGame *Mod::newSave() const
  * @param id Country type.
  * @return Rules for the country.
  */
-RuleCountry *Mod::getCountry(const std::string &id) const
+RuleCountry *Mod::getCountry(const std::string &id, bool error) const
 {
-	std::map<std::string, RuleCountry*>::const_iterator i = _countries.find(id);
-	if (_countries.end() != i) return i->second; else return 0;
+	return getRule(id, "Country", _countries, error);
 }
 
 /**
@@ -1380,10 +1398,9 @@ const std::vector<std::string> &Mod::getCountriesList() const
  * @param id Region type.
  * @return Rules for the region.
  */
-RuleRegion *Mod::getRegion(const std::string &id) const
+RuleRegion *Mod::getRegion(const std::string &id, bool error) const
 {
-	std::map<std::string, RuleRegion*>::const_iterator i = _regions.find(id);
-	if (_regions.end() != i) return i->second; else return 0;
+	return getRule(id, "Region", _regions, error);
 }
 
 /**
@@ -1401,10 +1418,9 @@ const std::vector<std::string> &Mod::getRegionsList() const
  * @param id Facility type.
  * @return Rules for the facility.
  */
-RuleBaseFacility *Mod::getBaseFacility(const std::string &id) const
+RuleBaseFacility *Mod::getBaseFacility(const std::string &id, bool error) const
 {
-	std::map<std::string, RuleBaseFacility*>::const_iterator i = _facilities.find(id);
-	if (_facilities.end() != i) return i->second; else return 0;
+	return getRule(id, "Facility", _facilities, error);
 }
 
 /**
@@ -1422,10 +1438,9 @@ const std::vector<std::string> &Mod::getBaseFacilitiesList() const
  * @param id Craft type.
  * @return Rules for the craft.
  */
-RuleCraft *Mod::getCraft(const std::string &id) const
+RuleCraft *Mod::getCraft(const std::string &id, bool error) const
 {
-	std::map<std::string, RuleCraft*>::const_iterator i = _crafts.find(id);
-	if (_crafts.end() != i) return i->second; else return 0;
+	return getRule(id, "Craft", _crafts, error);
 }
 
 /**
@@ -1443,10 +1458,9 @@ const std::vector<std::string> &Mod::getCraftsList() const
  * @param id Craft weapon type.
  * @return Rules for the craft weapon.
  */
-RuleCraftWeapon *Mod::getCraftWeapon(const std::string &id) const
+RuleCraftWeapon *Mod::getCraftWeapon(const std::string &id, bool error) const
 {
-	std::map<std::string, RuleCraftWeapon*>::const_iterator i = _craftWeapons.find(id);
-	if (_craftWeapons.end() != i) return i->second; else return 0;
+	return getRule(id, "Craft Weapon", _craftWeapons, error);
 }
 
 /**
@@ -1464,12 +1478,13 @@ const std::vector<std::string> &Mod::getCraftWeaponsList() const
  * @param id Item type.
  * @return Rules for the item, or 0 when the item is not found.
  */
-RuleItem *Mod::getItem(const std::string &id) const
+RuleItem *Mod::getItem(const std::string &id, bool error) const
 {
-	if (_items.find(id) != _items.end())
-		return _items.find(id)->second;
-	else
+	if (id == Armor::NONE)
+	{
 		return 0;
+	}
+	return getRule(id, "Item", _items, error);
 }
 
 /**
@@ -1487,10 +1502,9 @@ const std::vector<std::string> &Mod::getItemsList() const
  * @param id UFO type.
  * @return Rules for the UFO.
  */
-RuleUfo *Mod::getUfo(const std::string &id) const
+RuleUfo *Mod::getUfo(const std::string &id, bool error) const
 {
-	std::map<std::string, RuleUfo*>::const_iterator i = _ufos.find(id);
-	if (_ufos.end() != i) return i->second; else return 0;
+	return getRule(id, "UFO", _ufos, error);
 }
 
 /**
@@ -1508,10 +1522,9 @@ const std::vector<std::string> &Mod::getUfosList() const
  * @param name Terrain name.
  * @return Rules for the terrain.
  */
-RuleTerrain *Mod::getTerrain(const std::string &name) const
+RuleTerrain *Mod::getTerrain(const std::string &name, bool error) const
 {
-	std::map<std::string, RuleTerrain*>::const_iterator i = _terrains.find(name);
-	if (_terrains.end() != i) return i->second; else return 0;
+	return getRule(name, "Terrain", _terrains, error);
 }
 
 /**
@@ -1549,10 +1562,9 @@ MapDataSet *Mod::getMapDataSet(const std::string &name)
  * @param name Unit name.
  * @return Rules for the units.
  */
-RuleSoldier *Mod::getSoldier(const std::string &name) const
+RuleSoldier *Mod::getSoldier(const std::string &name, bool error) const
 {
-	std::map<std::string, RuleSoldier*>::const_iterator i = _soldiers.find(name);
-	if (_soldiers.end() != i) return i->second; else return 0;
+	return getRule(name, "Soldier", _soldiers, error);
 }
 
 /**
@@ -1579,10 +1591,9 @@ std::map<std::string, RuleCommendations *> Mod::getCommendation() const
  * @param name Unit name.
  * @return Rules for the units.
  */
-Unit *Mod::getUnit(const std::string &name) const
+Unit *Mod::getUnit(const std::string &name, bool error) const
 {
-	std::map<std::string, Unit*>::const_iterator i = _units.find(name);
-	if (_units.end() != i) return i->second; else return 0;
+	return getRule(name, "Unit", _units, error);
 }
 
 /**
@@ -1590,10 +1601,9 @@ Unit *Mod::getUnit(const std::string &name) const
  * @param name Race name.
  * @return Rules for the race.
  */
-AlienRace *Mod::getAlienRace(const std::string &name) const
+AlienRace *Mod::getAlienRace(const std::string &name, bool error) const
 {
-	std::map<std::string, AlienRace*>::const_iterator i = _alienRaces.find(name);
-	if (_alienRaces.end() != i) return i->second; else return 0;
+	return getRule(name, "Alien Race", _alienRaces, error);
 }
 
 /**
@@ -1611,10 +1621,9 @@ const std::vector<std::string> &Mod::getAlienRacesList() const
  * @param name Deployment name.
  * @return Rules for the deployment.
  */
-AlienDeployment *Mod::getDeployment(const std::string &name) const
+AlienDeployment *Mod::getDeployment(const std::string &name, bool error) const
 {
-	std::map<std::string, AlienDeployment*>::const_iterator i = _alienDeployments.find(name);
-	if (_alienDeployments.end() != i) return i->second; else return 0;
+	return getRule(name, "Alien Deployment", _alienDeployments, error);
 }
 
 /**
@@ -1632,10 +1641,9 @@ const std::vector<std::string> &Mod::getDeploymentsList() const
  * @param name Armor name.
  * @return Rules for the armor.
  */
-Armor *Mod::getArmor(const std::string &name) const
+Armor *Mod::getArmor(const std::string &name, bool error) const
 {
-	std::map<std::string, Armor*>::const_iterator i = _armors.find(name);
-	if (_armors.end() != i) return i->second; else return 0;
+	return getRule(name, "Armor", _armors, error);
 }
 
 /**
@@ -1683,10 +1691,9 @@ int Mod::getPersonnelTime() const
  * @param name Article name.
  * @return Article definition.
  */
-ArticleDefinition *Mod::getUfopaediaArticle(const std::string &name) const
+ArticleDefinition *Mod::getUfopaediaArticle(const std::string &name, bool error) const
 {
-	std::map<std::string, ArticleDefinition*>::const_iterator i = _ufopaediaArticles.find(name);
-	if (_ufopaediaArticles.end() != i) return i->second; else return 0;
+	return getRule(name, "UFOpaedia Article", _ufopaediaArticles, error);
 }
 
 /**
@@ -1723,10 +1730,9 @@ std::map<std::string, RuleInventory*> *Mod::getInventories()
  * @param id Inventory type.
  * @return Inventory ruleset.
  */
-RuleInventory *Mod::getInventory(const std::string &id) const
+RuleInventory *Mod::getInventory(const std::string &id, bool error) const
 {
-	std::map<std::string, RuleInventory*>::const_iterator i = _invs.find(id);
-	if (_invs.end() != i) return i->second; else return 0;
+	return getRule(id, "Inventory", _invs, error);
 }
 
 /**
@@ -1743,10 +1749,9 @@ const std::vector<std::string> &Mod::getInvsList() const
  * @param id Research project type.
  * @return Rules for the research project.
  */
-RuleResearch *Mod::getResearch (const std::string &id) const
+RuleResearch *Mod::getResearch (const std::string &id, bool error) const
 {
-	std::map<std::string, RuleResearch *>::const_iterator i = _research.find(id);
-	if (_research.end() != i) return i->second; else return 0;
+	return getRule(id, "Research", _research, error);
 }
 
 /**
@@ -1763,10 +1768,9 @@ const std::vector<std::string> &Mod::getResearchList() const
  * @param id Manufacture project type.
  * @return Rules for the manufacture project.
  */
-RuleManufacture *Mod::getManufacture (const std::string &id) const
+RuleManufacture *Mod::getManufacture (const std::string &id, bool error) const
 {
-	std::map<std::string, RuleManufacture *>::const_iterator i = _manufacture.find(id);
-	if (_manufacture.end() != i) return i->second; else return 0;
+	return getRule(id, "Manufacture", _manufacture, error);
 }
 
 /**
@@ -1778,21 +1782,20 @@ const std::vector<std::string> &Mod::getManufactureList() const
 	return _manufactureIndex;
 }
 
-
 /**
  * Generates and returns a list of facilities for custom bases.
  * The list contains all the facilities that are listed in the 'startingBase'
  * part of the ruleset.
  * @return The list of facilities for custom bases.
  */
-std::vector<OpenXcom::RuleBaseFacility*> Mod::getCustomBaseFacilities() const
+std::vector<RuleBaseFacility*> Mod::getCustomBaseFacilities() const
 {
-	std::vector<OpenXcom::RuleBaseFacility*> placeList;
+	std::vector<RuleBaseFacility*> placeList;
 
 	for (YAML::const_iterator i = _startingBase["facilities"].begin(); i != _startingBase["facilities"].end(); ++i)
 	{
 		std::string type = (*i)["type"].as<std::string>();
-		RuleBaseFacility *facility = getBaseFacility(type);
+		RuleBaseFacility *facility = getBaseFacility(type, true);
 		if (!facility->isLift())
 		{
 			placeList.push_back(facility);
@@ -1806,10 +1809,9 @@ std::vector<OpenXcom::RuleBaseFacility*> Mod::getCustomBaseFacilities() const
  * @param id Ufo trajectory id.
  * @return A pointer to the data for the specified ufo trajectory.
  */
-const UfoTrajectory *Mod::getUfoTrajectory(const std::string &id) const
+const UfoTrajectory *Mod::getUfoTrajectory(const std::string &id, bool error) const
 {
-	std::map<std::string, UfoTrajectory *>::const_iterator i = _ufoTrajectories.find(id);
-	if (_ufoTrajectories.end() != i) return i->second; else return 0;
+	return getRule(id, "Trajectory", _ufoTrajectories, error);
 }
 
 /**
@@ -1817,10 +1819,9 @@ const UfoTrajectory *Mod::getUfoTrajectory(const std::string &id) const
  * @param id Alien mission type.
  * @return Rules for the alien mission.
  */
-const RuleAlienMission *Mod::getAlienMission(const std::string &id) const
+const RuleAlienMission *Mod::getAlienMission(const std::string &id, bool error) const
 {
-	std::map<std::string, RuleAlienMission *>::const_iterator i = _alienMissions.find(id);
-	if (_alienMissions.end() != i) return i->second; else return 0;
+	return getRule(id, "Alien Mission", _alienMissions, error);
 }
 
 /**
@@ -1941,7 +1942,7 @@ template <typename T>
 struct compareRule : public std::binary_function<const std::string&, const std::string&, bool>
 {
 	Mod *_mod;
-	typedef T*(Mod::*RuleLookup)(const std::string &id);
+	typedef T*(Mod::*RuleLookup)(const std::string &id, bool error);
 	RuleLookup _lookup;
 
 	compareRule(Mod *mod, RuleLookup lookup) : _mod(mod), _lookup(lookup)
@@ -1950,8 +1951,8 @@ struct compareRule : public std::binary_function<const std::string&, const std::
 
 	bool operator()(const std::string &r1, const std::string &r2) const
 	{
-		T *rule1 = (_mod->*_lookup)(r1);
-		T *rule2 = (_mod->*_lookup)(r2);
+		T *rule1 = (_mod->*_lookup)(r1, true);
+		T *rule2 = (_mod->*_lookup)(r2, true);
 		return (rule1->getListOrder() < rule2->getListOrder());
 	}
 };
@@ -1970,8 +1971,8 @@ struct compareRule<RuleCraftWeapon> : public std::binary_function<const std::str
 
 	bool operator()(const std::string &r1, const std::string &r2) const
 	{
-		RuleItem *rule1 = _mod->getItem(_mod->getCraftWeapon(r1)->getLauncherItem());
-		RuleItem *rule2 = _mod->getItem(_mod->getCraftWeapon(r2)->getLauncherItem());
+		RuleItem *rule1 = _mod->getItem(_mod->getCraftWeapon(r1)->getLauncherItem(), true);
+		RuleItem *rule2 = _mod->getItem(_mod->getCraftWeapon(r2)->getLauncherItem(), true);
 		return (rule1->getListOrder() < rule2->getListOrder());
 	}
 };
@@ -2084,7 +2085,7 @@ Soldier *Mod::genSoldier(SavedGame *save, std::string type) const
 	for (int i = 0; i < 10 && duplicate; i++)
 	{
 		delete soldier;
-		soldier = new Soldier(getSoldier(type), getArmor(getSoldier(type)->getArmor()), newId);
+		soldier = new Soldier(getSoldier(type, true), getArmor(getSoldier(type, true)->getArmor(), true), newId);
 		duplicate = false;
 		for (std::vector<Base*>::iterator i = save->getBases()->begin(); i != save->getBases()->end() && !duplicate; ++i)
 		{
@@ -2170,19 +2171,9 @@ std::string Mod::getFontName() const
  * @param id the interface we want info on.
  * @return the interface.
  */
-RuleInterface *Mod::getInterface(const std::string &id) const
+RuleInterface *Mod::getInterface(const std::string &id, bool error) const
 {
-	std::map<std::string, RuleInterface*>::const_iterator i = _interfaces.find(id);
-	if (_interfaces.end() != i) return i->second; else return 0;
-}
-
-/**
-* Gets the rules for the Save Converter.
-* @return Pointer to converter rules.
-*/
-RuleConverter *Mod::getConverter() const
-{
-	return _converter;
+	return getRule(id, "Interface", _interfaces, error);
 }
 
 /**
@@ -2192,6 +2183,15 @@ RuleConverter *Mod::getConverter() const
 RuleGlobe *Mod::getGlobe() const
 {
 	return _globe;
+}
+
+/**
+* Gets the rules for the Save Converter.
+* @return Pointer to converter rules.
+*/
+RuleConverter *Mod::getConverter() const
+{
+	return _converter;
 }
 
 const std::map<std::string, SoundDefinition *> *Mod::getSoundDefinitions() const
@@ -2204,10 +2204,17 @@ const std::vector<SDL_Color> *Mod::getTransparencies() const
 	return &_transparencies;
 }
 
-const std::vector<MapScript*> *Mod::getMapScript(std::string id) const
+const std::vector<MapScript*> *Mod::getMapScript(const std::string& id) const
 {
 	std::map<std::string, std::vector<MapScript*> >::const_iterator i = _mapScripts.find(id);
-	if (_mapScripts.end() != i) return &i->second; else return 0;
+	if (_mapScripts.end() != i)
+	{
+		return &i->second;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 /**
@@ -2215,9 +2222,9 @@ const std::vector<MapScript*> *Mod::getMapScript(std::string id) const
  * @param id Video id.
  * @return A pointer to the data for the specified video.
  */
-RuleVideo *Mod::getVideo(const std::string &id) const
+RuleVideo *Mod::getVideo(const std::string &id, bool error) const
 {
-	return getRule(id, "Video", _videos);
+	return getRule(id, "Video", _videos, error);
 }
 
 const std::map<std::string, RuleMusic *> *Mod::getMusic() const
@@ -2230,10 +2237,9 @@ const std::vector<std::string> *Mod::getMissionScriptList() const
 	return &_missionScriptIndex;
 }
 
-RuleMissionScript *Mod::getMissionScript(const std::string &name) const
+RuleMissionScript *Mod::getMissionScript(const std::string &name, bool error) const
 {
-	std::map<std::string, RuleMissionScript*>::const_iterator i = _missionScripts.find(name);
-	if (_missionScripts.end() != i) return i->second; else return 0;
+	return getRule(name, "Mission Script", _missionScripts, error);
 }
 std::string Mod::getFinalResearch() const
 {
@@ -2965,7 +2971,7 @@ void Mod::loadExtraResources()
 				{
 					Log(LOG_VERBOSE) << "Loading surface set from folder: " << fileName << " starting at frame: " << startFrame;
 					int offset = startFrame;
-					std::set<std::string> contents = FileMap::getVFolderContents(fileName);
+					const std::set<std::string>& contents = FileMap::getVFolderContents(fileName);
 					for (std::set<std::string>::iterator k = contents.begin(); k != contents.end(); ++k)
 					{
 						if (!isImageFile((*k).substr((*k).length() - 4, (*k).length())))
@@ -3002,7 +3008,7 @@ void Mod::loadExtraResources()
 				{
 					if (spritePack->getSubX() == 0 && spritePack->getSubY() == 0)
 					{
-						std::string fullPath = FileMap::getFilePath(fileName);
+						const std::string& fullPath = FileMap::getFilePath(fileName);
 						if (_sets[sheetName]->getFrame(startFrame))
 						{
 							Log(LOG_VERBOSE) << "Replacing frame: " << startFrame;
@@ -3075,7 +3081,7 @@ void Mod::loadExtraResources()
 			{
 				Log(LOG_VERBOSE) << "Loading sound set from folder: " << fileName << " starting at index: " << startSound;
 				int offset = startSound;
-				std::set<std::string> contents = FileMap::getVFolderContents(fileName);
+				const std::set<std::string>& contents = FileMap::getVFolderContents(fileName);
 				for (std::set<std::string>::iterator k = contents.begin(); k != contents.end(); ++k)
 				{
 					try
@@ -3099,7 +3105,7 @@ void Mod::loadExtraResources()
 			}
 			else
 			{
-				std::string fullPath = FileMap::getFilePath(fileName);
+				const std::string& fullPath = FileMap::getFilePath(fileName);
 				if (_sounds[setName]->getSound(startSound))
 				{
 					Log(LOG_VERBOSE) << "Replacing index: " << startSound;
